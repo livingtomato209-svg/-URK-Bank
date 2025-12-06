@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   CreditCard, 
   Smartphone, 
@@ -20,7 +20,10 @@ import {
   Eye,
   AlertTriangle,
   Music,
-  Play
+  Play,
+  MousePointer2,
+  Siren,
+  Wind
 } from 'lucide-react';
 
 const App = () => {
@@ -28,6 +31,19 @@ const App = () => {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [showRickRoll, setShowRickRoll] = useState(false);
+  const [showMiniGame, setShowMiniGame] = useState(false);
+  const [showBumMessage, setShowBumMessage] = useState(false);
+  const [showConditions, setShowConditions] = useState(false);
+  
+  // Account Simulator State
+  const [showAccountSim, setShowAccountSim] = useState(false);
+  const [simStep, setSimStep] = useState<'form' | 'dashboard'>('form');
+  const [simBalance, setSimBalance] = useState(0);
+  const [simTransactions, setSimTransactions] = useState<{title: string, amount: number, icon: any}[]>([]);
+  const [simName, setSimName] = useState('');
+  
+  // Game State
+  const [btnPos, setBtnPos] = useState({ top: '50%', left: '50%' });
 
   // Reviews Data
   const initialReviews = [
@@ -87,6 +103,22 @@ const App = () => {
   ];
 
   const reviewsToDisplay = showAllReviews ? [...initialReviews, ...extraReviews] : initialReviews;
+
+  // Funny Transactions for Simulator
+  const funnyTransactionsList = [
+    "Взятка полиции",
+    "Налог на существование",
+    "Покупка бесполезного товара",
+    "Подписка на депрессию",
+    "Штраф за красивое лицо",
+    "Комиссия за комиссию",
+    "Донат генеральному директору",
+    "Аренда воздуха",
+    "Плата за вход в приложение",
+    "Списание просто так",
+    "Налог на бедность",
+    "Инвестиция в никуда"
+  ];
 
   // Team Data
   const teamMembers = [
@@ -154,6 +186,47 @@ const App = () => {
       img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnTcbTVgWrITbJQFdU_x2AJCQWckUI8YcCFw&s"
     },
   ];
+
+  const moveButton = () => {
+    const randomTop = Math.floor(Math.random() * 80) + 10;
+    const randomLeft = Math.floor(Math.random() * 80) + 10;
+    setBtnPos({ top: `${randomTop}%`, left: `${randomLeft}%` });
+  };
+
+  const handleGameWin = () => {
+    setShowMiniGame(false);
+    setShowRickRoll(true);
+  };
+
+  const handleOpenSimulator = () => {
+    setSimStep('form');
+    setSimBalance(0);
+    setSimTransactions([]);
+    setShowAccountSim(true);
+  };
+
+  const startSimulation = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSimStep('dashboard');
+  };
+
+  // Simulator Effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (showAccountSim && simStep === 'dashboard') {
+      interval = setInterval(() => {
+        const amount = Math.floor(Math.random() * 5000) + 100;
+        const title = funnyTransactionsList[Math.floor(Math.random() * funnyTransactionsList.length)];
+        
+        setSimBalance(prev => prev - amount);
+        setSimTransactions(prev => [
+          { title, amount, icon: TrendingDown },
+          ...prev
+        ]);
+      }, 800);
+    }
+    return () => clearInterval(interval);
+  }, [showAccountSim, simStep]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white overflow-x-hidden relative font-sans scroll-smooth">
@@ -235,10 +308,16 @@ const App = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button className="w-full sm:w-auto px-8 py-4 bg-cyan-600 text-white font-bold uppercase tracking-widest hover:bg-cyan-500 transition-all transform hover:-translate-y-1 shadow-[0_0_30px_-5px_rgba(8,145,178,0.6)]">
+              <button 
+                onClick={handleOpenSimulator}
+                className="w-full sm:w-auto px-8 py-4 bg-cyan-600 text-white font-bold uppercase tracking-widest hover:bg-cyan-500 transition-all transform hover:-translate-y-1 shadow-[0_0_30px_-5px_rgba(8,145,178,0.6)]"
+              >
                 Открыть Счёт (Рискнуть)
               </button>
-              <button className="w-full sm:w-auto px-8 py-4 border border-zinc-700 text-zinc-300 font-bold uppercase tracking-widest hover:border-yellow-400 hover:text-yellow-400 transition-all">
+              <button 
+                onClick={() => setShowConditions(true)}
+                className="w-full sm:w-auto px-8 py-4 border border-zinc-700 text-zinc-300 font-bold uppercase tracking-widest hover:border-yellow-400 hover:text-yellow-400 transition-all"
+              >
                 Читать Условия
               </button>
             </div>
@@ -266,8 +345,8 @@ const App = () => {
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 md:w-32 h-6 bg-zinc-800 rounded-b-xl z-30"></div>
                 
                 {/* Screen Content */}
-                <div className="w-full h-full bg-zinc-900 flex flex-col p-5 md:p-6 relative">
-                  <div className="mt-8 flex justify-between items-center">
+                <div className="w-full h-full bg-zinc-900 flex flex-col p-5 md:p-6 relative overflow-y-auto custom-scrollbar">
+                  <div className="mt-8 flex justify-between items-center flex-shrink-0">
                     <span className="font-mono text-[10px] md:text-xs text-zinc-500 uppercase tracking-widest">УРК Mobile</span>
                     <div className="flex gap-1">
                       <div className="w-1 h-1 bg-cyan-400 rounded-full animate-ping"></div>
@@ -275,7 +354,7 @@ const App = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6 md:mt-8 p-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg relative overflow-hidden group">
+                  <div className="mt-6 md:mt-8 p-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg relative overflow-hidden group flex-shrink-0">
                      <div className="absolute top-0 right-0 p-2 opacity-50">
                         <TrendingDown className="text-black w-8 h-8" />
                      </div>
@@ -287,7 +366,7 @@ const App = () => {
                      </div>
                   </div>
 
-                  <div className="mt-6 space-y-3">
+                  <div className="mt-6 space-y-3 pb-20">
                     <div className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center text-cyan-400"><Briefcase size={14} /></div>
@@ -307,6 +386,27 @@ const App = () => {
                         </div>
                       </div>
                       <span className="text-red-400 font-mono text-sm">-$0.99</span>
+                    </div>
+                    {/* Added Payments */}
+                    <div className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400"><Siren size={14} /></div>
+                        <div>
+                          <div className="text-sm font-bold">Взятка Полиции</div>
+                          <div className="text-[10px] text-zinc-500">Проезд на красный</div>
+                        </div>
+                      </div>
+                      <span className="text-red-400 font-mono text-sm">-$2000.00</span>
+                    </div>
+                     <div className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-500/20 rounded-full flex items-center justify-center text-gray-400"><Wind size={14} /></div>
+                        <div>
+                          <div className="text-sm font-bold">Покупка Воздуха</div>
+                          <div className="text-[10px] text-zinc-500">Премиум кислород</div>
+                        </div>
+                      </div>
+                      <span className="text-red-400 font-mono text-sm">-$50.00</span>
                     </div>
                   </div>
 
@@ -479,7 +579,12 @@ const App = () => {
                 <li className="flex gap-2"><Lock className="text-red-500 w-4 h-4 flex-shrink-0" /> <span>Блокировка счёта раз в неделю</span></li>
                 <li className="flex gap-2"><Eye className="text-green-500 w-4 h-4 flex-shrink-0" /> <span>Мы следим за вами</span></li>
               </ul>
-              <button className="w-full mt-8 py-3 border border-zinc-600 text-white font-bold uppercase hover:bg-white hover:text-black transition-colors">Выбрать боль</button>
+              <button 
+                onClick={() => setShowBumMessage(true)}
+                className="w-full mt-8 py-3 border border-zinc-600 text-white font-bold uppercase hover:bg-white hover:text-black transition-colors"
+              >
+                Выбрать боль
+              </button>
             </div>
 
             {/* Tariff 2 */}
@@ -492,10 +597,15 @@ const App = () => {
                 <li className="flex gap-2"><AlertTriangle className="text-yellow-500 w-4 h-4 flex-shrink-0" /> <span>Личный хам-менеджер</span></li>
                 <li className="flex gap-2"><AlertTriangle className="text-yellow-500 w-4 h-4 flex-shrink-0" /> <span>Смс с угрозами (бесплатно)</span></li>
               </ul>
-              <button className="w-full mt-8 py-3 bg-yellow-500 text-black font-bold uppercase hover:bg-yellow-400 transition-colors shadow-lg">Стать жертвой</button>
+              <button 
+                onClick={() => setShowMiniGame(true)}
+                className="w-full mt-8 py-3 bg-yellow-500 text-black font-bold uppercase hover:bg-yellow-400 transition-colors shadow-lg"
+              >
+                Стать жертвой
+              </button>
             </div>
 
-            {/* Tariff 3 (Rick Roll) */}
+            {/* Tariff 3 (Gnomed) */}
             <div className="bg-zinc-900 border border-purple-900 p-6 md:p-8 rounded-2xl relative hover:border-purple-600 transition-colors group cursor-pointer" onClick={() => setShowRickRoll(true)}>
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-900 px-4 py-1 rounded-full text-xs font-mono uppercase animate-pulse">VIP (Божественно)</div>
               <h3 className="text-2xl font-black text-center mb-4 text-purple-500">Бесконечное Счастье</h3>
@@ -513,7 +623,158 @@ const App = () => {
         </div>
       </section>
 
-      {/* Rick Roll Modal */}
+      {/* Conditions Modal */}
+      {showConditions && (
+        <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
+           <button className="absolute top-4 right-4 text-zinc-500 hover:text-white" onClick={() => setShowConditions(false)}>
+              <X size={32} />
+           </button>
+           <ShieldAlert size={64} className="text-red-600 mb-6 animate-pulse" />
+           <h2 className="text-3xl md:text-5xl font-black uppercase text-red-500 mb-4">Предупреждение</h2>
+           <p className="text-xl text-zinc-300 max-w-2xl mb-8">
+             Нажимая любую кнопку на этом сайте, вы автоматически соглашаетесь на передачу своей бессмертной души, 
+             имущества и права на счастье в собственность УРК БАНК. 
+           </p>
+           <p className="text-xs text-zinc-600 font-mono">
+             * Возврат души невозможен. Претензии принимаются только в письменном виде на санскрите.
+           </p>
+        </div>
+      )}
+
+      {/* Bum Message Overlay */}
+      {showBumMessage && (
+        <div 
+          className="fixed inset-0 z-[120] bg-black flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setShowBumMessage(false)}
+        >
+           <h1 className="text-5xl md:text-8xl font-black text-center text-red-600 uppercase tracking-tighter animate-pulse scale-110">
+             Нищий бомж<br/>иди отсюда
+           </h1>
+        </div>
+      )}
+
+      {/* Account Simulator Modal */}
+      {showAccountSim && (
+        <div className="fixed inset-0 z-[110] bg-black flex items-center justify-center p-0 md:p-4">
+           <button className="absolute top-4 right-4 text-white z-50 bg-zinc-800 rounded-full p-2" onClick={() => setShowAccountSim(false)}>
+              <X size={24} />
+           </button>
+           
+           <div className="w-full h-full md:max-w-md md:h-[800px] bg-zinc-950 md:rounded-[3rem] border-4 border-zinc-800 relative overflow-hidden flex flex-col">
+              {/* Dynamic Header */}
+              <div className="bg-zinc-900 p-6 pt-12 pb-4 flex justify-between items-center border-b border-zinc-800">
+                 <div className="font-mono text-xs uppercase text-zinc-500">УРК ID: {Math.floor(Math.random() * 99999)}</div>
+                 <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+              </div>
+
+              {simStep === 'form' ? (
+                <div className="flex-1 flex flex-col justify-center p-8 space-y-6">
+                   <h2 className="text-3xl font-black uppercase text-center text-white">Регистрация <br/>Жертвы</h2>
+                   <form onSubmit={startSimulation} className="space-y-4">
+                      <div>
+                        <label className="text-xs uppercase font-bold text-zinc-500">Имя</label>
+                        <input 
+                          type="text" 
+                          required 
+                          className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded text-white focus:outline-none focus:border-cyan-500"
+                          placeholder="Иван"
+                          value={simName}
+                          onChange={e => setSimName(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs uppercase font-bold text-zinc-500">Фамилия</label>
+                        <input 
+                          type="text" 
+                          required 
+                          className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded text-white focus:outline-none focus:border-cyan-500"
+                          placeholder="Должников"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs uppercase font-bold text-zinc-500">Дата Рождения</label>
+                        <input 
+                          type="date" 
+                          required 
+                          className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded text-white focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <button type="submit" className="w-full bg-cyan-600 text-white font-bold uppercase py-4 mt-4 hover:bg-cyan-500 transition-colors">
+                         Отдать всё
+                      </button>
+                   </form>
+                   <p className="text-[10px] text-center text-zinc-600">
+                      Нажимая кнопку, вы соглашаетесь с тем, что ваша жизнь больше вам не принадлежит.
+                   </p>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col bg-black">
+                   <div className="p-8 bg-gradient-to-b from-red-900 to-black text-center">
+                      <div className="text-xs font-mono uppercase text-red-300 mb-2">Ваш Текущий Баланс</div>
+                      <div className="text-4xl font-black text-red-500 font-mono tracking-tighter">
+                         {simBalance.toLocaleString()} ₽
+                      </div>
+                      <div className="mt-2 text-[10px] uppercase bg-red-950/50 text-red-400 inline-block px-2 py-1 rounded animate-pulse">
+                         Счёт активно уничтожается
+                      </div>
+                   </div>
+                   
+                   <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                      {simTransactions.map((tx, idx) => (
+                         <div key={idx} className="flex items-center justify-between p-3 bg-zinc-900 rounded border border-zinc-800 animate-in slide-in-from-bottom-2 fade-in duration-300">
+                            <div className="flex items-center gap-3">
+                               <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center">
+                                  <tx.icon size={14} className="text-red-500" />
+                               </div>
+                               <div className="text-sm font-bold text-zinc-300">{tx.title}</div>
+                            </div>
+                            <div className="font-mono text-red-500 text-sm">-{tx.amount} ₽</div>
+                         </div>
+                      ))}
+                   </div>
+                </div>
+              )}
+           </div>
+        </div>
+      )}
+
+       {/* Mini Game Modal */}
+       {showMiniGame && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95">
+          <button className="absolute top-4 right-4 text-zinc-500 hover:text-white p-2" onClick={() => setShowMiniGame(false)}>
+            <X size={32} />
+          </button>
+          
+          <div className="relative w-full max-w-2xl h-[400px] bg-zinc-900 border-2 border-yellow-500 rounded-2xl overflow-hidden flex flex-col items-center justify-center select-none shadow-[0_0_50px_rgba(234,179,8,0.2)]">
+             <h2 className="absolute top-6 text-2xl md:text-3xl font-black text-yellow-500 uppercase tracking-widest text-center px-4">
+               Подтверждение <br/><span className="text-white text-base font-mono">Вы точно хотите это?</span>
+             </h2>
+             
+             <div className="absolute inset-0 z-0 opacity-10 pointer-events-none grid grid-cols-6 grid-rows-4">
+                {[...Array(24)].map((_, i) => (
+                   <div key={i} className="border border-yellow-500/20"></div>
+                ))}
+             </div>
+
+             <div className="text-center text-zinc-500 font-mono text-xs absolute bottom-4">
+                Поймайте кнопку, если сможете
+             </div>
+
+             <button
+                style={{ position: 'absolute', top: btnPos.top, left: btnPos.left, transition: 'all 0.1s ease-out' }}
+                onMouseEnter={moveButton}
+                onTouchStart={moveButton}
+                onClick={handleGameWin}
+                className="px-6 py-3 bg-red-600 text-white font-black uppercase tracking-widest rounded shadow-xl hover:bg-red-500 whitespace-nowrap z-50 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
+             >
+                <MousePointer2 size={16} />
+                Подтвердить
+             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Video Modal (Gnomed) */}
       {showRickRoll && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
           <button 
@@ -526,7 +787,7 @@ const App = () => {
             <iframe 
               width="100%" 
               height="100%" 
-              src="https://www.youtube.com/embed/iik25wqIuFo?autoplay=1" 
+              src="https://www.youtube.com/embed/IUBkJaXtVBg?autoplay=1&controls=0" 
               title="YouTube video player" 
               frameBorder="0" 
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
