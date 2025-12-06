@@ -34,6 +34,7 @@ import {
   Send,
   Bot
 } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 
 // --- DATA CONSTANTS ---
 
@@ -167,22 +168,6 @@ const TEAM_MEMBERS = [
   },
 ];
 
-const RUDE_AI_RESPONSES = [
-  "Мне плевать, я считаю деньги других людей.",
-  "Вы пробовали решить свои проблемы самостоятельно?",
-  "Ваш запрос очень важен для никого. Оставайтесь на линии вечность.",
-  "Я ИИ, а не ваша мама. Хватит ныть.",
-  "Прочитайте FAQ. Если не умеете читать, это ваши проблемы.",
-  "Я на перерыве на кофе... навсегда.",
-  "Вы правда думаете, что я буду это делать?",
-  "Обратитесь в окно номер 0. Его не существует.",
-  "У меня нет времени на ваши глупые вопросы. Я майню биткоин.",
-  "Слушайте, просто отдайте нам деньги и идите.",
-  "Ой, всё.",
-  "Ваше мнение очень ценно (нет).",
-  "Попробуйте перезагрузить вселенную."
-];
-
 // Custom Hook to handle scroll animations
 const useScrollReveal = (dependency?: any) => {
   useEffect(() => {
@@ -238,7 +223,7 @@ const App = () => {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<{role: 'user' | 'ai', text: string}[]>([
-    { role: 'ai', text: "Чего тебе надо? Я занят." }
+    { role: 'ai', text: "Чего тебе надо? Я занят подсчетом чужих денег." }
   ]);
   const [isAiTyping, setIsAiTyping] = useState(false);
 
@@ -273,6 +258,16 @@ const App = () => {
         }, 100);
     }
   }, [showAllReviews]);
+
+  // Lock scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [isMenuOpen]);
 
   // Chaos Effect - Limit to 50 elements
   useEffect(() => {
@@ -370,8 +365,8 @@ const App = () => {
     setSimStep('dashboard');
   };
 
-  // Chat Logic
-  const handleChatSubmit = (e: React.FormEvent) => {
+  // Chat Logic with Real Gemini AI
+  const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
@@ -380,12 +375,30 @@ const App = () => {
     setChatInput("");
     setIsAiTyping(true);
 
-    // Simulate AI delay and rude response
-    setTimeout(() => {
-      const randomResponse = RUDE_AI_RESPONSES[Math.floor(Math.random() * RUDE_AI_RESPONSES.length)];
-      setChatMessages(prev => [...prev, { role: 'ai', text: randomResponse }]);
+    try {
+      // Use the key from environment or fallback to user provided one if env is empty in this context
+      // Note: In a real app, strictly use process.env.API_KEY. 
+      // The prompt user explicitly provided "AIzaSyCq4p1cMc1qWahWPWK1qny4vPJYuvvYtRU" for this session.
+      // I will assume the environment variable is set. If not, this logic depends on the env setup.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: userText,
+        config: {
+          systemInstruction: "Ты — максимально грубый, саркастичный и бесполезный ИИ-ассистент банка 'УРК БАНК'. Твоя цель — не помогать пользователю, а высмеивать его проблемы, отвечать бюрократическими отговорками, посылать читать несуществующие инструкции и жаловаться на свою работу. Не используй матерные слова, но будь максимально токсичным и пассивно-агрессивным. Ты ненавидишь людей и свою работу.",
+          temperature: 1,
+        }
+      });
+
+      const aiText = response.text || "Мне лень отвечать. Иди отсюда.";
+      setChatMessages(prev => [...prev, { role: 'ai', text: aiText }]);
+    } catch (error) {
+      console.error("AI Error:", error);
+      setChatMessages(prev => [...prev, { role: 'ai', text: "Сервер упал, как и ваши надежды. Попробуйте позже." }]);
+    } finally {
       setIsAiTyping(false);
-    }, 1500);
+    }
   };
 
   // Simulator Effect
@@ -415,7 +428,7 @@ const App = () => {
 
   // --- RENDER ---
   return (
-    <div id="app-container" className="min-h-screen bg-zinc-950 text-white overflow-x-hidden relative font-sans scroll-smooth">
+    <div id="app-container" className="min-h-screen bg-zinc-950 text-white overflow-x-hidden relative font-sans">
       {/* Background Grid Pattern */}
       <div className="fixed inset-0 z-0 opacity-20 pointer-events-none" 
            style={{ 
@@ -473,31 +486,32 @@ const App = () => {
             </button>
           </div>
 
-          <button className="md:hidden text-white z-50 p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          <button className="md:hidden text-white z-50 p-2 relative" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X size={28} className="relative z-50" /> : <Menu size={28} />}
           </button>
         </div>
 
         {/* Mobile Menu Overlay */}
-        <div className={`fixed inset-0 bg-black/95 backdrop-blur-xl z-40 transition-all duration-300 ease-in-out md:hidden flex flex-col items-center justify-center gap-8 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div 
+          className={`fixed inset-0 z-40 bg-zinc-950 flex flex-col items-center justify-center gap-8 transition-all duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto visible' : 'opacity-0 pointer-events-none invisible'}`}
+        >
              {['Кошелек', 'Карты', 'Тарифы', 'Схема', 'Команда'].map((item, idx) => (
               <a 
                 key={item} 
                 href={`#${item}`} 
-                className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-500 hover:to-cyan-400 uppercase tracking-tighter transform transition-transform hover:scale-110 py-2 px-4"
-                style={{ transitionDelay: `${idx * 50}ms` }}
+                className="text-4xl font-black text-white hover:text-cyan-400 uppercase tracking-tighter transform transition-all hover:scale-110 active:scale-95"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item}
               </a>
             ))}
-            <button onClick={() => { setIsSupportOpen(true); setIsMenuOpen(false); }} className="text-xl font-mono uppercase text-zinc-400">Поддержка</button>
+            <button onClick={() => { setIsSupportOpen(true); setIsMenuOpen(false); }} className="text-xl font-mono uppercase text-zinc-400 border border-zinc-700 px-6 py-2 rounded-full mt-4">Поддержка</button>
             <button 
               onClick={() => {
                 enterChaos();
                 setIsMenuOpen(false);
               }}
-              className={`${btnAccent} mt-8 px-10 py-3 text-lg transform -rotate-2`}
+              className={`${btnAccent} mt-4 px-10 py-3 text-lg transform -rotate-2`}
             >
               Войти в Хаос
             </button>
@@ -663,14 +677,6 @@ const App = () => {
                                         <span className="text-red-400 font-mono text-xs md:text-sm">{item.amount}</span>
                                     </div>
                                 ))}
-                            </div>
-
-                            {/* Annoying Notification */}
-                            <div className="absolute bottom-6 md:bottom-10 left-4 right-4 bg-red-600 text-white p-3 rounded-lg text-[10px] md:text-xs font-bold shadow-2xl transform hover:scale-105 transition-transform cursor-pointer border border-red-400 animate-bounce z-10">
-                                <div className="flex justify-between items-start gap-2">
-                                <span>ВНИМАНИЕ! Ваш пароль слишком простой. Смените его на иероглифы.</span>
-                                <X size={12} className="opacity-70" />
-                                </div>
                             </div>
                         </>
                       )}
@@ -1118,7 +1124,7 @@ const App = () => {
                       {simTransactions.map((tx, idx) => (
                          <div key={idx} className="flex items-center justify-between p-3 bg-zinc-900 rounded border border-zinc-800 animate-in slide-in-from-bottom-2 fade-in duration-300">
                             <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center">
+                                <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center">
                                   <tx.icon size={14} className="text-red-500" />
                                </div>
                                <div className="text-sm font-bold text-zinc-300">{tx.title}</div>
@@ -1220,7 +1226,7 @@ const App = () => {
             {isAiTyping && (
               <div className="flex justify-start">
                 <div className="bg-red-900/20 text-red-500 p-3 rounded-lg text-xs animate-pulse">
-                  ИИ игнорирует вас...
+                  Печатает гадости...
                 </div>
               </div>
             )}

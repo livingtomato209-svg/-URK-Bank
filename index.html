@@ -44,10 +44,15 @@
       }
     </script>
     <style>
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 80px; /* Offset for fixed header */
+      }
       body {
         font-family: 'Inter', sans-serif;
         background-color: #09090b;
         color: #f4f4f5;
+        overflow-x: hidden;
       }
       .glass-panel {
         background: rgba(24, 24, 27, 0.7);
@@ -91,7 +96,7 @@
 }
 </script>
 </head>
-  <body class="bg-zinc-950 text-zinc-50 antialiased selection:bg-cyan-500 selection:text-black overflow-x-hidden">
+  <body class="bg-zinc-950 text-zinc-50 antialiased selection:bg-cyan-500 selection:text-black">
     <div id="root"></div>
   </body>
 </html>
