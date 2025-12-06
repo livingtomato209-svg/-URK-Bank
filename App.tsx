@@ -29,10 +29,13 @@ import {
   ArrowDown,
   CornerDownRight,
   Newspaper,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare,
+  Send,
+  Bot
 } from 'lucide-react';
 
-// --- DATA CONSTANTS (Moved outside component for stability) ---
+// --- DATA CONSTANTS ---
 
 const INITIAL_REVIEWS = [
   { 
@@ -164,6 +167,22 @@ const TEAM_MEMBERS = [
   },
 ];
 
+const RUDE_AI_RESPONSES = [
+  "Мне плевать, я считаю деньги других людей.",
+  "Вы пробовали решить свои проблемы самостоятельно?",
+  "Ваш запрос очень важен для никого. Оставайтесь на линии вечность.",
+  "Я ИИ, а не ваша мама. Хватит ныть.",
+  "Прочитайте FAQ. Если не умеете читать, это ваши проблемы.",
+  "Я на перерыве на кофе... навсегда.",
+  "Вы правда думаете, что я буду это делать?",
+  "Обратитесь в окно номер 0. Его не существует.",
+  "У меня нет времени на ваши глупые вопросы. Я майню биткоин.",
+  "Слушайте, просто отдайте нам деньги и идите.",
+  "Ой, всё.",
+  "Ваше мнение очень ценно (нет).",
+  "Попробуйте перезагрузить вселенную."
+];
+
 // Custom Hook to handle scroll animations
 const useScrollReveal = (dependency?: any) => {
   useEffect(() => {
@@ -180,6 +199,14 @@ const useScrollReveal = (dependency?: any) => {
 
     const elements = document.querySelectorAll('.reveal-on-scroll');
     elements.forEach((el) => observer.observe(el));
+
+    // Force re-check immediately for dynamic content
+    if (dependency !== undefined) {
+      setTimeout(() => {
+        const newElements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)');
+        newElements.forEach((el) => observer.observe(el));
+      }, 100);
+    }
 
     return () => observer.disconnect();
   }, [dependency]);
@@ -207,6 +234,14 @@ const App = () => {
   const [commissionAmount, setCommissionAmount] = useState(0);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   
+  // AI Support State
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'ai', text: string}[]>([
+    { role: 'ai', text: "Чего тебе надо? Я занят." }
+  ]);
+  const [isAiTyping, setIsAiTyping] = useState(false);
+
   // Account Simulator State
   const [showAccountSim, setShowAccountSim] = useState(false);
   const [simStep, setSimStep] = useState<'form' | 'dashboard'>('form');
@@ -233,15 +268,13 @@ const App = () => {
   // Auto-scroll when reviews expand
   useEffect(() => {
     if (showAllReviews && reviewsRef.current) {
-        // Scroll slightly to reveal new content if expanded
-        // setTimeout to allow render to complete
         setTimeout(() => {
             reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 100);
     }
   }, [showAllReviews]);
 
-  // Chaos Effect - Limit to 50 elements for performance
+  // Chaos Effect - Limit to 50 elements
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isChaosActive) {
@@ -252,7 +285,6 @@ const App = () => {
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`
           };
-          // Keep only last 50 items
           const newArray = [...prev, newItem];
           if (newArray.length > 50) newArray.shift();
           return newArray;
@@ -306,12 +338,10 @@ const App = () => {
   };
 
   const handleGetNews = () => {
-    // Shows the News Modal instead of an alert
     setShowNewsModal(true);
   };
 
   const handleKnowCommission = () => {
-     // Replaced alert with State + Modal
      const randomCommission = Math.floor(Math.random() * 10000) + 500;
      setCommissionAmount(randomCommission);
      setShowCommissionModal(true);
@@ -338,6 +368,24 @@ const App = () => {
   const startSimulation = (e: React.FormEvent) => {
     e.preventDefault();
     setSimStep('dashboard');
+  };
+
+  // Chat Logic
+  const handleChatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userText = chatInput;
+    setChatMessages(prev => [...prev, { role: 'user', text: userText }]);
+    setChatInput("");
+    setIsAiTyping(true);
+
+    // Simulate AI delay and rude response
+    setTimeout(() => {
+      const randomResponse = RUDE_AI_RESPONSES[Math.floor(Math.random() * RUDE_AI_RESPONSES.length)];
+      setChatMessages(prev => [...prev, { role: 'ai', text: randomResponse }]);
+      setIsAiTyping(false);
+    }, 1500);
   };
 
   // Simulator Effect
@@ -399,7 +447,7 @@ const App = () => {
             <span className="text-xl md:text-2xl font-black tracking-tighter uppercase font-mono text-cyan-500 group-hover:text-cyan-400 transition-colors">УРК<span className="text-white">БАНК</span></span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 font-mono text-sm uppercase tracking-widest text-zinc-400">
+          <div className="hidden md:flex items-center gap-6 xl:gap-8 font-mono text-xs xl:text-sm uppercase tracking-widest text-zinc-400">
             {['Кошелек', 'Карты', 'Тарифы', 'Схема', 'Команда'].map((item) => (
               <a key={item} href={`#${item}`} className="hover:text-cyan-400 transition-colors relative group py-2">
                 {item}
@@ -409,6 +457,14 @@ const App = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
+             {/* Support Trigger */}
+            <button 
+              onClick={() => setIsSupportOpen(true)}
+              className="font-mono text-xs uppercase text-zinc-400 hover:text-white flex items-center gap-2 mr-2"
+            >
+              <HelpCircle size={16} />
+              Поддержка
+            </button>
             <button 
               onClick={enterChaos}
               className={`${btnAccent} px-6 py-2 text-xs skew-x-[-10deg]`}
@@ -435,6 +491,7 @@ const App = () => {
                 {item}
               </a>
             ))}
+            <button onClick={() => { setIsSupportOpen(true); setIsMenuOpen(false); }} className="text-xl font-mono uppercase text-zinc-400">Поддержка</button>
             <button 
               onClick={() => {
                 enterChaos();
@@ -1135,6 +1192,55 @@ const App = () => {
         </div>
       )}
 
+      {/* AI Support Drawer */}
+      <div className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-zinc-900 border-l border-zinc-700 shadow-2xl z-[300] transform transition-transform duration-300 ease-in-out ${isSupportOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="h-full flex flex-col">
+          <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
+            <div className="flex items-center gap-2">
+              <Bot className="text-red-500" />
+              <span className="font-bold uppercase tracking-widest text-red-500">Злой ИИ</span>
+            </div>
+            <button onClick={() => setIsSupportOpen(false)} className="text-zinc-500 hover:text-white transition-colors">
+              <X size={24} />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-900/50">
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                  msg.role === 'user' 
+                    ? 'bg-zinc-800 text-white border border-zinc-700' 
+                    : 'bg-red-900/20 text-red-200 border border-red-900/50'
+                }`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {isAiTyping && (
+              <div className="flex justify-start">
+                <div className="bg-red-900/20 text-red-500 p-3 rounded-lg text-xs animate-pulse">
+                  ИИ игнорирует вас...
+                </div>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleChatSubmit} className="p-4 border-t border-zinc-800 bg-zinc-950 flex gap-2">
+            <input 
+              type="text" 
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Напишите свою проблему..."
+              className="flex-1 bg-zinc-900 border border-zinc-700 rounded p-2 text-sm focus:outline-none focus:border-red-500 text-white"
+            />
+            <button type="submit" className="bg-red-600 hover:bg-red-700 text-white p-2 rounded transition-colors">
+              <Send size={18} />
+            </button>
+          </form>
+        </div>
+      </div>
+
       {/* Team Section */}
       <section id="Команда" className="py-16 md:py-24 bg-zinc-950 px-4 md:px-6 scroll-mt-24">
         <div className="max-w-7xl mx-auto">
@@ -1142,30 +1248,35 @@ const App = () => {
             Руководство <span className="text-purple-500">Банка</span>
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-12 text-center">
+          <div className="flex flex-col gap-4">
             {TEAM_MEMBERS.map((member, i) => (
                <div 
                  key={i} 
-                 className="group relative flex flex-col items-center reveal-on-scroll"
+                 className="group relative flex flex-row items-center bg-zinc-900/30 border border-zinc-800 hover:bg-zinc-900 hover:border-purple-500/50 transition-all duration-300 p-4 rounded-xl overflow-hidden cursor-pointer h-24 hover:h-48 reveal-on-scroll"
                  style={{ transitionDelay: `${i * 100}ms` }}
+                 onClick={() => setSelectedMember(member)}
                >
-                  <div className={`w-24 h-24 md:w-48 md:h-48 mx-auto ${member.color} rounded-full flex items-center justify-center mb-4 md:mb-6 shadow-xl transform group-hover:scale-105 transition-transform duration-300 overflow-hidden border-4 border-zinc-800 group-hover:border-white cursor-pointer`} onClick={() => setSelectedMember(member)}>
+                  <div className={`w-16 h-16 flex-shrink-0 ${member.color} rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-zinc-700 group-hover:border-white transition-colors`}>
                      {member.img ? (
-                       <img src={member.img} alt={member.name} className="w-full h-full object-cover" />
+                       <img src={member.img} alt={member.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                      ) : (
-                       <User size={48} className="opacity-50 md:w-16 md:h-16" />
+                       <User size={32} className="opacity-50" />
                      )}
                   </div>
-                  <h3 className="font-bold text-sm md:text-xl uppercase group-hover:text-purple-400 transition-colors break-words w-full">{member.name}</h3>
-                  <div className="text-[9px] md:text-xs font-mono text-zinc-400 mb-2 uppercase tracking-wide h-8 flex items-center justify-center">{member.role}</div>
-                  <p className="text-[10px] md:text-sm text-zinc-500 italic truncate px-2 mb-4 w-full opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">"{member.desc}"</p>
                   
-                  <button 
-                    onClick={() => setSelectedMember(member)}
-                    className={`${btnSecondary} mt-auto px-3 py-1 md:px-4 md:py-2 text-[10px] md:text-xs`}
-                  >
-                    Подробнее
-                  </button>
+                  <div className="ml-6 flex-1 flex flex-col justify-center h-full">
+                    <div className="flex items-center justify-between w-full">
+                        <h3 className="font-bold text-lg md:text-xl uppercase group-hover:text-purple-400 transition-colors">{member.name}</h3>
+                        <span className="text-[10px] font-mono border border-zinc-700 px-2 py-1 rounded text-zinc-500 group-hover:text-white group-hover:border-purple-500 transition-colors uppercase hidden sm:block">{member.role}</span>
+                    </div>
+                    
+                    <div className="h-0 opacity-0 group-hover:h-auto group-hover:opacity-100 transition-all duration-300 overflow-hidden mt-0 group-hover:mt-2">
+                        <p className="text-zinc-400 text-sm italic border-l-2 border-purple-500 pl-3">"{member.desc}"</p>
+                        <div className="mt-4 text-xs text-purple-400 font-mono uppercase tracking-widest flex items-center gap-2">
+                            Подробнее <ArrowDown size={12} className="-rotate-90" />
+                        </div>
+                    </div>
+                  </div>
                </div>
             ))}
           </div>
