@@ -166,6 +166,14 @@ const TEAM_MEMBERS = [
     fullDesc: "Появляется раз в месяц, поправляет галстук и исчезает. Зарплату получает в антиматерии. Контролирует время обработки ваших транзакций.",
     img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnTcbTVgWrITbJQFdU_x2AJCQWckUI8YcCFw&s"
   },
+  { 
+    name: "Данил", 
+    role: "Владелец Сервера", 
+    color: "bg-emerald-600", 
+    desc: "Сидит у параши", 
+    fullDesc: "Создал свой говно майн сервер и всем говорит на нём играть. Живет в подвале дата-центра и питается энергией от перегрева видеокарт.",
+    img: "https://drive.google.com/uc?export=view&id=1Hxz6ERQGCHa4v1Yi-Vu_gRWbWTTD8R5i"
+  },
 ];
 
 // Custom Hook to handle scroll animations
@@ -419,12 +427,13 @@ const App = () => {
     return () => clearInterval(interval);
   }, [showAccountSim, simStep]);
 
-  // Button Style Constants
-  const btnBase = "font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900";
-  const btnPrimary = `${btnBase} bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_20px_-5px_rgba(8,145,178,0.5)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.8)] hover:-translate-y-1 hover:scale-105 active:rotate-1`;
-  const btnSecondary = `${btnBase} border border-zinc-600 text-zinc-300 hover:border-white hover:text-white hover:bg-white/5 hover:scale-105 active:rotate-1`;
-  const btnDanger = `${btnBase} bg-red-600 text-white hover:bg-red-500 shadow-lg hover:scale-105 active:rotate-1`;
-  const btnAccent = `${btnBase} bg-yellow-400 text-black hover:bg-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.5)] hover:scale-105 active:rotate-1`;
+  // Button Style Constants - Updated to unified Base
+  const btnBase = "font-bold uppercase tracking-widest transition-all duration-300 transform hover:scale-105 active:rotate-1 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900";
+  
+  const btnPrimary = `${btnBase} bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_20px_-5px_rgba(8,145,178,0.5)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.8)] hover:-translate-y-1`;
+  const btnSecondary = `${btnBase} border border-zinc-600 text-zinc-300 hover:border-white hover:text-white hover:bg-white/5`;
+  const btnDanger = `${btnBase} bg-red-600 text-white hover:bg-red-500 shadow-lg`;
+  const btnAccent = `${btnBase} bg-yellow-400 text-black hover:bg-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.5)]`;
 
   // --- RENDER ---
   return (
