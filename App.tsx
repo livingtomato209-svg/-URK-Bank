@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   CreditCard, 
@@ -23,14 +22,48 @@ import {
   Play,
   MousePointer2,
   Siren,
-  Wind
+  Wind,
+  Loader2,
+  Wrench,
+  GitGraph,
+  ArrowDown,
+  CornerDownRight
 } from 'lucide-react';
 
+// --- CUSTOM HOOKS ---
+
+// Hook to handle scroll animations
+const useScrollReveal = () => {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll('.reveal-on-scroll');
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+};
+
+// --- COMPONENTS ---
+
 const App = () => {
+  useScrollReveal(); // Initialize scroll animations
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
-  const [showRickRoll, setShowRickRoll] = useState(false);
+  
+  // Modals State
+  const [showRickRoll, setShowRickRoll] = useState(false); 
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [showBumMessage, setShowBumMessage] = useState(false);
   const [showConditions, setShowConditions] = useState(false);
@@ -44,6 +77,82 @@ const App = () => {
   
   // Game State
   const [btnPos, setBtnPos] = useState({ top: '50%', left: '50%' });
+
+  // Phone State
+  const [panicCount, setPanicCount] = useState<number | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isGravityActive, setIsGravityActive] = useState(false);
+  const [isExploded, setIsExploded] = useState(false);
+  
+  // Chaos State
+  const [chaosElements, setChaosElements] = useState<{id: number, left: string, top: string}[]>([]);
+  const [isChaosActive, setIsChaosActive] = useState(false);
+
+  // Chaos Effect
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isChaosActive) {
+      interval = setInterval(() => {
+        setChaosElements(prev => [
+          ...prev, 
+          {
+            id: Date.now(),
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`
+          }
+        ]);
+      }, 250);
+    }
+    return () => clearInterval(interval);
+  }, [isChaosActive]);
+
+  const enterChaos = () => {
+    setIsChaosActive(true);
+  };
+
+  // Panic Effect
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (panicCount !== null && panicCount > 0) {
+      interval = setInterval(() => {
+        setPanicCount(prev => (prev !== null ? prev - 1 : null));
+      }, 1000);
+    } else if (panicCount === 0) {
+      setPanicCount(null);
+      setIsExploded(true);
+    }
+    return () => clearInterval(interval);
+  }, [panicCount]);
+
+  // Gravity Effect (Collapse)
+  useEffect(() => {
+    if (isGravityActive) {
+        const elements = document.querySelectorAll('#root > *');
+        elements.forEach((el: any) => {
+            el.style.transition = `transform ${Math.random() * 2 + 1}s cubic-bezier(0.5, 0, 1, 1), opacity 2s`;
+            el.style.transform = `translateY(${window.innerHeight + 500}px) rotate(${Math.random() * 90 - 45}deg)`;
+            el.style.opacity = '0';
+        });
+    }
+  }, [isGravityActive]);
+
+  const handlePanic = () => {
+    setPanicCount(3);
+  };
+
+  const handleRun = () => {
+    setIsRunning(true);
+  };
+
+  const triggerCollapse = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsGravityActive(true);
+  };
+
+  const handleGetNews = () => {
+    console.log("Fetching latest news...");
+    alert("НОВОСТИ: Генеральный директор запретил буквы 'А' в именах сотрудников. Акции упали, но потом взлетели, потому что это смешно.");
+  };
 
   // Reviews Data
   const initialReviews = [
@@ -128,7 +237,6 @@ const App = () => {
       color: "bg-orange-600", 
       desc: "Молчание — золото.",
       fullDesc: "Легендарный физик-теоретик, который переквалифицировался в финансового тирана. Никогда не говорит ни слова, но один его взгляд заставляет акции падать. Управляет банком с помощью монтировки.",
-      // Gordon Freeman placeholder
       img: "https://upload.wikimedia.org/wikipedia/en/a/a5/Gordon_Freeman.png" 
     },
     { 
@@ -137,7 +245,6 @@ const App = () => {
       color: "bg-zinc-800", 
       desc: "Любит визитки.",
       fullDesc: "Его визитка имеет лучший шрифт, чем у вас. Занимается 'слияниями' конкурентов с асфальтом. Увлекается музыкой 80-х и уходом за кожей.",
-      // Patrick Bateman
       img: "https://i.redd.it/77bvnk555ffc1.png" 
     },
     { 
@@ -146,7 +253,6 @@ const App = () => {
       color: "bg-black border border-white/20", 
       desc: "Никому не доверяет.",
       fullDesc: "Взломал наш банк, чтобы устроиться на работу. Теперь он взламывает клиентов, чтобы они не расслаблялись. Разговаривает с воображаемым другом о курсе биткоина.",
-      // Elliot Alderson (Updated Link)
       img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdpePG5yJFHhAvQVWyWB9zer83v0hZIyOafw&s"
     },
     { 
@@ -155,7 +261,6 @@ const App = () => {
       color: "bg-yellow-500 text-black", 
       desc: "Всё законно... почти.",
       fullDesc: "Знает, как превратить финансовую пирамиду в 'инновационный многоуровневый маркетинг'. Если вас посадили за наши кредиты — лучше звоните ему.",
-      // Saul Goodman placeholder
       img: "https://upload.wikimedia.org/wikipedia/en/3/34/Jimmy_McGill_BCS_S3.png"
     },
     { 
@@ -164,7 +269,6 @@ const App = () => {
       color: "bg-yellow-200 text-black", 
       desc: "Наука, бич!",
       fullDesc: "Отвечает за доставку наличных. Иногда наличные теряются, но он всегда находит оправдание. Любит магниты.",
-      // Jesse Pinkman
       img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd8EkQv-38wHJr_xe-ZZGeoKhKZik_UUXOsA&s"
     },
     { 
@@ -173,7 +277,6 @@ const App = () => {
       color: "bg-green-700", 
       desc: "Варит лучший продукт.",
       fullDesc: "Мы сами не знаем, что он делает в банке. Но его 'синий лёд' (замороженные активы) пользуется огромным спросом. Не стучите в его дверь.",
-      // Walter White placeholder
       img: "https://upload.wikimedia.org/wikipedia/en/0/03/Walter_White_S5B.png"
     },
     { 
@@ -182,7 +285,6 @@ const App = () => {
       color: "bg-blue-900", 
       desc: "Непредсказуемые последствия.",
       fullDesc: "Появляется раз в месяц, поправляет галстук и исчезает. Зарплату получает в антиматерии. Контролирует время обработки ваших транзакций.",
-      // G-Man
       img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnTcbTVgWrITbJQFdU_x2AJCQWckUI8YcCFw&s"
     },
   ];
@@ -212,7 +314,7 @@ const App = () => {
 
   // Simulator Effect
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (showAccountSim && simStep === 'dashboard') {
       interval = setInterval(() => {
         const amount = Math.floor(Math.random() * 5000) + 100;
@@ -228,8 +330,15 @@ const App = () => {
     return () => clearInterval(interval);
   }, [showAccountSim, simStep]);
 
+  // Button Style Constants
+  const btnBase = "font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900";
+  const btnPrimary = `${btnBase} bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_20px_-5px_rgba(8,145,178,0.5)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.8)] hover:-translate-y-1`;
+  const btnSecondary = `${btnBase} border border-zinc-600 text-zinc-300 hover:border-white hover:text-white hover:bg-white/5`;
+  const btnDanger = `${btnBase} bg-red-600 text-white hover:bg-red-500 shadow-lg`;
+  const btnAccent = `${btnBase} bg-yellow-400 text-black hover:bg-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.5)]`;
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-white overflow-x-hidden relative font-sans scroll-smooth">
+    <div id="app-container" className="min-h-screen bg-zinc-950 text-white overflow-x-hidden relative font-sans scroll-smooth">
       {/* Background Grid Pattern */}
       <div className="fixed inset-0 z-0 opacity-20 pointer-events-none" 
            style={{ 
@@ -238,27 +347,43 @@ const App = () => {
            }}>
       </div>
 
+      {/* Chaos Overlay */}
+      <div className="fixed inset-0 z-[200] pointer-events-none overflow-hidden">
+        {chaosElements.map(el => (
+          <div 
+            key={el.id} 
+            className="absolute animate-spin" 
+            style={{ left: el.left, top: el.top }}
+          >
+            <Loader2 className="text-yellow-400 w-12 h-12" />
+          </div>
+        ))}
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed w-full z-50 glass-panel border-b border-white/5 backdrop-blur-md bg-black/50">
+      <nav className="fixed w-full z-50 glass-panel border-b border-white/5 backdrop-blur-md bg-black/80 md:bg-black/50 transition-all duration-500">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 z-50">
-            <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center transform -rotate-6 border-2 border-yellow-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+          <div className="flex items-center gap-2 z-50 group cursor-pointer">
+            <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center transform -rotate-6 border-2 border-yellow-400 shadow-[0_0_15px_rgba(6,182,212,0.5)] group-hover:rotate-0 transition-transform duration-300">
               <span className="font-mono font-black text-xl text-yellow-300">У</span>
             </div>
-            <span className="text-2xl font-black tracking-tighter uppercase font-mono text-cyan-500">УРК<span className="text-white">БАНК</span></span>
+            <span className="text-2xl font-black tracking-tighter uppercase font-mono text-cyan-500 group-hover:text-cyan-400 transition-colors">УРК<span className="text-white">БАНК</span></span>
           </div>
 
           <div className="hidden md:flex items-center gap-8 font-mono text-sm uppercase tracking-widest text-zinc-400">
-            {['Кошелек', 'Карты', 'Тарифы', 'Команда'].map((item) => (
-              <a key={item} href={`#${item}`} className="hover:text-cyan-400 transition-colors relative group">
+            {['Кошелек', 'Карты', 'Тарифы', 'Схема', 'Команда'].map((item) => (
+              <a key={item} href={`#${item}`} className="hover:text-cyan-400 transition-colors relative group py-2">
                 {item}
-                <span className="absolute -bottom-1 left-0 w-0 h-px bg-cyan-500 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-cyan-500 group-hover:w-full transition-all duration-300 ease-out"></span>
               </a>
             ))}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <button className="px-6 py-2 bg-yellow-400 text-black font-black uppercase tracking-wider text-xs hover:bg-yellow-300 transition-colors skew-x-[-10deg] border border-yellow-200 shadow-lg">
+            <button 
+              onClick={enterChaos}
+              className={`${btnAccent} px-6 py-2 text-xs skew-x-[-10deg]`}
+            >
               <span className="skew-x-[10deg] inline-block">Войти в Хаос</span>
             </button>
           </div>
@@ -269,28 +394,35 @@ const App = () => {
         </div>
 
         {/* Mobile Menu Overlay */}
-        <div className={`fixed inset-0 bg-zinc-950 z-40 transition-transform duration-300 ease-in-out md:hidden flex flex-col items-center justify-center gap-8 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-             {['Кошелек', 'Карты', 'Тарифы', 'Команда'].map((item) => (
+        <div className={`fixed inset-0 bg-black/95 backdrop-blur-xl z-40 transition-all duration-300 ease-in-out md:hidden flex flex-col items-center justify-center gap-8 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+             {['Кошелек', 'Карты', 'Тарифы', 'Схема', 'Команда'].map((item, idx) => (
               <a 
                 key={item} 
                 href={`#${item}`} 
-                className="text-4xl font-black text-zinc-300 hover:text-cyan-400 uppercase tracking-tighter"
+                className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-500 hover:to-cyan-400 uppercase tracking-tighter transform transition-transform hover:scale-110"
+                style={{ transitionDelay: `${idx * 50}ms` }}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item}
               </a>
             ))}
-            <button className="mt-8 px-8 py-4 bg-yellow-400 text-black font-black uppercase tracking-wider text-sm shadow-xl">
+            <button 
+              onClick={() => {
+                enterChaos();
+                setIsMenuOpen(false);
+              }}
+              className={`${btnAccent} mt-8 px-12 py-4 text-lg transform -rotate-2`}
+            >
               Войти в Хаос
             </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section id="Кошелек" className="relative pt-32 pb-12 md:pt-48 md:pb-32 px-6 overflow-hidden">
+      <section id="Кошелек" className="relative pt-32 pb-12 md:pt-48 md:pb-32 px-6 overflow-hidden scroll-mt-24">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative z-10">
           
-          <div className="space-y-6 md:space-y-8 order-2 lg:order-1">
+          <div className="space-y-6 md:space-y-8 order-2 lg:order-1 reveal-on-scroll">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 font-mono text-[10px] md:text-xs uppercase tracking-widest animate-pulse">
               <ShieldAlert className="w-3 h-3" />
               Осторожно: Высокие ставки
@@ -298,27 +430,33 @@ const App = () => {
             
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-black leading-[0.9] tracking-tighter uppercase break-words">
               Банк <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">Которого Вы Боитесь</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient-x">Которого Вы Боитесь</span>
             </h1>
             
-            <p className="text-zinc-400 text-base md:text-xl max-w-xl leading-relaxed border-l-2 border-yellow-500 pl-6">
+            <p className="text-zinc-400 text-sm sm:text-base md:text-xl max-w-xl leading-relaxed border-l-2 border-yellow-500 pl-6">
               УРК БАНК — это не просто финансы. Это испытание воли. 
               Скачайте приложение и попробуйте найти кнопку "Выход". 
               Спойлер: её нет.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 flex-wrap">
               <button 
                 onClick={handleOpenSimulator}
-                className="w-full sm:w-auto px-8 py-4 bg-cyan-600 text-white font-bold uppercase tracking-widest hover:bg-cyan-500 transition-all transform hover:-translate-y-1 shadow-[0_0_30px_-5px_rgba(8,145,178,0.6)]"
+                className={`${btnPrimary} w-full sm:w-auto px-8 py-3`}
               >
                 Открыть Счёт (Рискнуть)
               </button>
               <button 
                 onClick={() => setShowConditions(true)}
-                className="w-full sm:w-auto px-8 py-4 border border-zinc-700 text-zinc-300 font-bold uppercase tracking-widest hover:border-yellow-400 hover:text-yellow-400 transition-all"
+                className={`${btnSecondary} w-full sm:w-auto px-8 py-3`}
               >
                 Читать Условия
+              </button>
+              <button 
+                onClick={handleGetNews}
+                className={`${btnPrimary} w-full sm:w-auto px-8 py-3`}
+              >
+                Получить Новости
               </button>
             </div>
 
@@ -328,7 +466,7 @@ const App = () => {
                 { icon: TrendingDown, label: 'Отрицательный Рост' },
                 { icon: Skull, label: 'Пожизненная Ипотека' }
               ].map((feature, idx) => (
-                <div key={idx} className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-help bg-zinc-900/50 p-2 rounded-lg border border-transparent hover:border-zinc-700">
+                <div key={idx} className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-help bg-zinc-900/50 p-2 rounded-lg border border-transparent hover:border-zinc-700 hover:scale-105 transform duration-300">
                   <feature.icon className="w-5 h-5 text-zinc-500" />
                   <span className="text-xs font-mono uppercase leading-tight">{feature.label}</span>
                 </div>
@@ -336,97 +474,128 @@ const App = () => {
             </div>
           </div>
 
-          <div className="relative h-[450px] md:h-[600px] w-full flex items-center justify-center lg:justify-end perspective-[1000px] order-1 lg:order-2">
+          <div className="relative h-[500px] md:h-[600px] w-full flex items-center justify-center lg:justify-end perspective-[1000px] order-1 lg:order-2 reveal-on-scroll" style={{ transitionDelay: '200ms' }}>
              {/* Abstract Decorative Elements */}
-             <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent rounded-full blur-[80px] md:blur-[100px] animate-pulse"></div>
+             <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent rounded-full blur-[80px] md:blur-[100px] animate-pulse pointer-events-none"></div>
 
-             {/* Phone Mockup (CSS Only) */}
-             <div className="relative w-[260px] md:w-[300px] h-[520px] md:h-[600px] bg-zinc-950 rounded-[2.5rem] md:rounded-[3rem] border-4 md:border-8 border-zinc-800 shadow-2xl z-20 overflow-hidden transform rotate-y-[-10deg] rotate-x-[5deg] transition-transform hover:rotate-0 duration-500 border-r-zinc-700">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 md:w-32 h-6 bg-zinc-800 rounded-b-xl z-30"></div>
-                
-                {/* Screen Content */}
-                <div className="w-full h-full bg-zinc-900 flex flex-col p-5 md:p-6 relative overflow-y-auto custom-scrollbar">
-                  <div className="mt-8 flex justify-between items-center flex-shrink-0">
-                    <span className="font-mono text-[10px] md:text-xs text-zinc-500 uppercase tracking-widest">УРК Mobile</span>
-                    <div className="flex gap-1">
-                      <div className="w-1 h-1 bg-cyan-400 rounded-full animate-ping"></div>
-                      <div className="w-1 h-1 bg-zinc-600 rounded-full"></div>
+             {/* Phone Mockup (Interactive) */}
+             <div 
+                className={`w-[90vw] max-w-[320px] h-[80vh] max-h-[640px] bg-zinc-950 rounded-[2rem] md:rounded-[3rem] border-4 md:border-8 border-zinc-800 shadow-2xl overflow-hidden transition-transform ease-out flex-shrink-0
+                ${!isRunning ? 'hover:rotate-0 rotate-y-[-10deg] rotate-x-[5deg] hover:shadow-cyan-500/20' : ''}
+                ${isRunning ? 'translate-x-[200vw] rotate-[120deg] duration-1000' : ''}
+             `}>
+                  <>
+                    <div 
+                        className="absolute top-0 left-1/2 -translate-x-1/2 w-20 md:w-32 h-6 bg-zinc-800 rounded-b-xl z-50 flex items-center justify-center"
+                    >
+                        <div className="w-8 h-1 bg-zinc-900 rounded-full"></div>
                     </div>
-                  </div>
+                    
+                    {/* Screen Content */}
+                    <div className="w-full h-full bg-zinc-900 flex flex-col p-4 md:p-6 relative overflow-y-auto custom-scrollbar select-none">
+                      {panicCount !== null ? (
+                        <div className="absolute inset-0 z-[60] bg-red-600 flex items-center justify-center flex-col animate-pulse">
+                          <h2 className="text-9xl font-black text-white">{panicCount}</h2>
+                          <p className="text-white font-mono uppercase mt-4 font-bold">Самоуничтожение</p>
+                        </div>
+                      ) : null}
 
-                  <div className="mt-6 md:mt-8 p-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg relative overflow-hidden group flex-shrink-0">
-                     <div className="absolute top-0 right-0 p-2 opacity-50">
-                        <TrendingDown className="text-black w-8 h-8" />
-                     </div>
-                     <span className="text-black font-mono text-xs uppercase font-bold">Ваш Долг</span>
-                     <div className="text-2xl md:text-3xl font-black text-black mt-1">$-9,999.99</div>
-                     <div className="mt-4 flex gap-2">
-                        <div className="px-3 py-1 bg-black/20 rounded-md text-black text-[10px] font-bold uppercase cursor-pointer hover:bg-black/30">Паника</div>
-                        <div className="px-3 py-1 bg-black/10 rounded-md text-black text-[10px] font-bold uppercase cursor-pointer hover:bg-black/20">Бежать</div>
-                     </div>
-                  </div>
+                      {/* Explosion View */}
+                      {isExploded ? (
+                        <div className="absolute inset-0 z-[70] bg-black flex items-center justify-center flex-col p-6 text-center animate-in zoom-in duration-300">
+                            <Flame size={64} className="text-orange-500 animate-bounce mb-4" />
+                            <h2 className="text-2xl font-black text-white uppercase mb-2">БА-БАХ!</h2>
+                            <p className="text-zinc-400 text-sm mb-6">Телефон уничтожен. Но кредит остался.</p>
+                            <button 
+                                onClick={() => setIsExploded(false)}
+                                className={`${btnSecondary} px-4 py-2 text-xs flex items-center gap-2 justify-center w-full`}
+                            >
+                                <Wrench size={14} /> Починить (5000₽)
+                            </button>
+                        </div>
+                      ) : (
+                        <>
+                            <div className="mt-8 flex justify-between items-center flex-shrink-0">
+                                <span className="font-mono text-[10px] md:text-xs text-zinc-500 uppercase tracking-widest">УРК Mobile</span>
+                                <div className="flex gap-1">
+                                <div className="w-1 h-1 bg-cyan-400 rounded-full animate-ping"></div>
+                                <div className="w-1 h-1 bg-zinc-600 rounded-full"></div>
+                                </div>
+                            </div>
 
-                  <div className="mt-6 space-y-3 pb-20">
-                    <div className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center text-cyan-400"><Briefcase size={14} /></div>
-                        <div>
-                          <div className="text-sm font-bold">Взятка Мэру</div>
-                          <div className="text-[10px] text-zinc-500">Автоплатеж</div>
-                        </div>
-                      </div>
-                      <span className="text-red-400 font-mono text-sm">-$500.00</span>
-                    </div>
-                    <div className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400"><Ghost size={14} /></div>
-                        <div>
-                          <div className="text-sm font-bold">Подписка на Ничто</div>
-                          <div className="text-[10px] text-zinc-500">Ежесекундно</div>
-                        </div>
-                      </div>
-                      <span className="text-red-400 font-mono text-sm">-$0.99</span>
-                    </div>
-                    {/* Added Payments */}
-                    <div className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400"><Siren size={14} /></div>
-                        <div>
-                          <div className="text-sm font-bold">Взятка Полиции</div>
-                          <div className="text-[10px] text-zinc-500">Проезд на красный</div>
-                        </div>
-                      </div>
-                      <span className="text-red-400 font-mono text-sm">-$2000.00</span>
-                    </div>
-                     <div className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-500/20 rounded-full flex items-center justify-center text-gray-400"><Wind size={14} /></div>
-                        <div>
-                          <div className="text-sm font-bold">Покупка Воздуха</div>
-                          <div className="text-[10px] text-zinc-500">Премиум кислород</div>
-                        </div>
-                      </div>
-                      <span className="text-red-400 font-mono text-sm">-$50.00</span>
-                    </div>
-                  </div>
+                            <div className="mt-6 md:mt-8 p-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg relative overflow-hidden group flex-shrink-0 hover:shadow-orange-500/50 transition-shadow duration-300">
+                                {/* Collapse Button */}
+                                <div 
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={triggerCollapse}
+                                    className="absolute top-0 right-0 p-2 opacity-50 hover:opacity-100 cursor-pointer transition-opacity z-50 hover:scale-110 duration-200" 
+                                    title="Обрушить экономику"
+                                >
+                                    <TrendingDown className="text-black w-8 h-8" />
+                                </div>
 
-                  {/* Annoying Notification */}
-                  <div className="absolute bottom-10 left-4 right-4 bg-red-600 text-white p-3 rounded-lg text-xs font-bold shadow-2xl transform hover:scale-105 transition-transform cursor-pointer border border-red-400">
-                    <div className="flex justify-between items-start">
-                      <span>ВНИМАНИЕ! Ваш пароль слишком простой. Смените его на иероглифы.</span>
-                      <X size={12} className="opacity-50" />
+                                <span className="text-black font-mono text-xs uppercase font-bold">Ваш Долг</span>
+                                <div className="text-2xl md:text-3xl font-black text-black mt-1">$-9,999.99</div>
+                                <div className="mt-4 flex gap-2">
+                                    <button 
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={handlePanic}
+                                    className="px-3 py-1 bg-black/20 rounded-md text-black text-[10px] font-bold uppercase cursor-pointer hover:bg-black/30 active:scale-95 transition-transform"
+                                    >
+                                    Паника
+                                    </button>
+                                    <button 
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={handleRun}
+                                    className="px-3 py-1 bg-black/10 rounded-md text-black text-[10px] font-bold uppercase cursor-pointer hover:bg-black/20 active:scale-95 transition-transform"
+                                    >
+                                    Бежать
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 space-y-3 pb-20">
+                                {[
+                                    { icon: Briefcase, title: 'Взятка Мэру', sub: 'Автоплатеж', amount: '-$500.00', color: 'cyan' },
+                                    { icon: Ghost, title: 'Подписка на Ничто', sub: 'Ежесекундно', amount: '-$0.99', color: 'purple' },
+                                    { icon: Siren, title: 'Взятка Полиции', sub: 'Проезд на красный', amount: '-$2000.00', color: 'blue' },
+                                    { icon: Wind, title: 'Покупка Воздуха', sub: 'Премиум кислород', amount: '-$50.00', color: 'gray' },
+                                ].map((item, idx) => (
+                                    <div key={idx} className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50 hover:bg-zinc-800 transition-colors cursor-pointer group">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 bg-${item.color}-500/20 rounded-full flex items-center justify-center text-${item.color}-400 group-hover:scale-110 transition-transform`}>
+                                                <item.icon size={14} />
+                                            </div>
+                                            <div>
+                                            <div className="text-sm font-bold">{item.title}</div>
+                                            <div className="text-[10px] text-zinc-500">{item.sub}</div>
+                                            </div>
+                                        </div>
+                                        <span className="text-red-400 font-mono text-sm">{item.amount}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Annoying Notification */}
+                            <div className="absolute bottom-10 left-4 right-4 bg-red-600 text-white p-3 rounded-lg text-xs font-bold shadow-2xl transform hover:scale-105 transition-transform cursor-pointer border border-red-400 animate-bounce">
+                                <div className="flex justify-between items-start">
+                                <span>ВНИМАНИЕ! Ваш пароль слишком простой. Смените его на иероглифы.</span>
+                                <X size={12} className="opacity-50" />
+                                </div>
+                            </div>
+                        </>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </>
              </div>
           </div>
         </div>
       </section>
 
       {/* Cards Collection Section */}
-      <section id="Карты" className="py-16 md:py-24 bg-zinc-900 border-y border-zinc-800 relative overflow-hidden">
+      <section id="Карты" className="py-16 md:py-24 bg-zinc-900 border-y border-zinc-800 relative overflow-hidden scroll-mt-24">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-12 md:mb-16 text-center">
+          <div className="mb-12 md:mb-16 text-center reveal-on-scroll">
             <h2 className="text-3xl md:text-6xl font-black uppercase mb-4 md:mb-6">
               Выбери Свою <span className="text-cyan-400">Судьбу</span>
             </h2>
@@ -439,9 +608,9 @@ const App = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8 md:gap-12">
              
              {/* 1. TECH CARD (CYAN) */}
-             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px]">
+             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px] reveal-on-scroll" style={{ transitionDelay: '100ms' }}>
                 <div className="absolute inset-0 bg-cyan-500/10 blur-3xl group-hover:bg-cyan-500/20 transition-all duration-500"></div>
-                <div className="relative h-full w-full max-w-[450px] mx-auto bg-gradient-to-br from-cyan-900 to-blue-950 rounded-2xl shadow-2xl border border-cyan-400/50 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-transform duration-500 group-hover:scale-105 group-hover:rotate-y-[5deg]">
+                <div className="relative h-full w-full max-w-[450px] mx-auto bg-gradient-to-br from-cyan-900 to-blue-950 rounded-2xl shadow-2xl border border-cyan-400/50 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-y-[5deg] group-hover:shadow-[0_0_40px_rgba(6,182,212,0.4)]">
                    {/* Circuit Lines */}
                    <svg className="absolute inset-0 w-full h-full opacity-60" preserveAspectRatio="none">
                       <path d="M0,50 L50,50 L70,20 L150,20 L170,50 L450,50" stroke="#facc15" strokeWidth="2" fill="none" className="drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" />
@@ -456,7 +625,7 @@ const App = () => {
                       <div className="text-[8px] md:text-[10px] text-yellow-400 font-mono border border-yellow-400 px-2 py-0.5 rounded">CYBER_DEBT</div>
                    </div>
                    <div className="relative z-10 mt-auto">
-                      <div className="text-lg md:text-xl font-mono text-cyan-100 tracking-widest drop-shadow-lg mb-2">1124 9056 2004 3333</div>
+                      <div className="text-lg md:text-xl font-mono text-cyan-100 tracking-widest drop-shadow-lg mb-2 group-hover:text-white transition-colors">1124 9056 2004 3333</div>
                       <div className="flex justify-between items-end">
                          <div className="text-yellow-300 font-mono text-xs md:text-sm uppercase">FIKOL / NEGR</div>
                          <div className="text-[10px] md:text-xs text-cyan-500 font-mono">VALID THRU: NEVER</div>
@@ -466,15 +635,15 @@ const App = () => {
              </div>
 
              {/* 2. SPACE CARD (ROCKET) */}
-             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px]">
+             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px] reveal-on-scroll" style={{ transitionDelay: '200ms' }}>
                 <div className="absolute inset-0 bg-purple-500/10 blur-3xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
-                <div className="relative h-full w-full max-w-[450px] mx-auto bg-[#0a0a1a] rounded-2xl shadow-2xl border-2 border-blue-500/50 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-transform duration-500 group-hover:scale-105 group-hover:rotate-y-[-5deg]">
+                <div className="relative h-full w-full max-w-[450px] mx-auto bg-[#0a0a1a] rounded-2xl shadow-2xl border-2 border-blue-500/50 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-y-[-5deg] group-hover:shadow-[0_0_40px_rgba(59,130,246,0.4)]">
                    {/* Space Background */}
                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-50"></div>
                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl"></div>
                    
                    {/* Rocket */}
-                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-400 opacity-20 group-hover:opacity-40 transition-opacity">
+                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-400 opacity-20 group-hover:opacity-40 transition-opacity animate-float">
                       <Rocket size={150} strokeWidth={1} className="md:w-[180px] md:h-[180px]" />
                    </div>
 
@@ -491,16 +660,16 @@ const App = () => {
                             <div className="absolute top-2 left-1 w-6 h-4 border border-black/30 rounded"></div>
                          </div>
                       </div>
-                      <div className="text-lg md:text-xl font-mono text-blue-50 tracking-widest drop-shadow-md mb-2">5570 1234 5678 9012</div>
+                      <div className="text-lg md:text-xl font-mono text-blue-50 tracking-widest drop-shadow-md mb-2 group-hover:text-white transition-colors">5570 1234 5678 9012</div>
                       <div className="text-blue-200 font-mono text-xs md:text-sm uppercase">JOHN DOE</div>
                    </div>
                 </div>
              </div>
 
              {/* 3. NATURE CARD (TREE) */}
-             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px]">
+             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px] reveal-on-scroll" style={{ transitionDelay: '300ms' }}>
                 <div className="absolute inset-0 bg-green-500/10 blur-3xl group-hover:bg-green-500/20 transition-all duration-500"></div>
-                <div className="relative h-full w-full max-w-[450px] mx-auto bg-green-950 rounded-2xl shadow-2xl border border-green-700 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-transform duration-500 group-hover:scale-105 group-hover:rotate-y-[5deg]">
+                <div className="relative h-full w-full max-w-[450px] mx-auto bg-green-950 rounded-2xl shadow-2xl border border-green-700 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-y-[5deg] group-hover:shadow-[0_0_40px_rgba(34,197,94,0.4)]">
                    {/* Vines SVG */}
                    <svg className="absolute inset-0 w-full h-full opacity-30 text-green-400" viewBox="0 0 400 250">
                       <path d="M0,0 Q50,50 0,100 Q50,150 0,250" fill="none" stroke="currentColor" strokeWidth="10" />
@@ -519,7 +688,7 @@ const App = () => {
                    </div>
                    
                    <div className="relative z-10 mt-auto text-center">
-                      <div className="text-lg md:text-xl font-mono text-green-50 tracking-widest drop-shadow-md mb-2">3310 5676 9032 1088</div>
+                      <div className="text-lg md:text-xl font-mono text-green-50 tracking-widest drop-shadow-md mb-2 group-hover:text-white transition-colors">3310 5676 9032 1088</div>
                       <div className="text-green-200 font-mono text-xs md:text-sm uppercase flex justify-between px-2 md:px-8">
                          <span>VALID: 09/26</span>
                          <span>JANE SMITH</span>
@@ -529,9 +698,9 @@ const App = () => {
              </div>
 
              {/* 4. RUNE CARD (RED) */}
-             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px]">
+             <div className="group relative perspective-[1000px] h-[220px] md:h-[280px] reveal-on-scroll" style={{ transitionDelay: '400ms' }}>
                 <div className="absolute inset-0 bg-red-500/10 blur-3xl group-hover:bg-red-500/20 transition-all duration-500"></div>
-                <div className="relative h-full w-full max-w-[450px] mx-auto bg-[#1a0505] rounded-2xl shadow-2xl border border-red-900 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-transform duration-500 group-hover:scale-105 group-hover:rotate-y-[-5deg]">
+                <div className="relative h-full w-full max-w-[450px] mx-auto bg-[#1a0505] rounded-2xl shadow-2xl border border-red-900 p-4 md:p-6 flex flex-col justify-between overflow-hidden transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-y-[-5deg] group-hover:shadow-[0_0_40px_rgba(239,68,68,0.4)]">
                    {/* Magic Circle SVG */}
                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 border border-red-600 rounded-full opacity-40 group-hover:rotate-90 transition-transform duration-[2000ms]"></div>
                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-36 h-36 md:w-48 md:h-48 border-2 border-dashed border-orange-600 rounded-full opacity-40 animate-spin-slow"></div>
@@ -547,7 +716,7 @@ const App = () => {
                           <div className="w-8 h-6 md:w-10 md:h-8 bg-zinc-200 rounded opacity-80"></div>
                           <Skull className="text-red-700 w-5 h-5 md:w-6 md:h-6" />
                       </div>
-                      <div className="text-lg md:text-xl font-mono text-red-50 tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] mb-2">
+                      <div className="text-lg md:text-xl font-mono text-red-50 tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] mb-2 group-hover:text-white transition-colors">
                          3310 5678 9012 3456
                       </div>
                       <div className="text-red-200 font-mono text-xs md:text-sm uppercase">
@@ -564,58 +733,58 @@ const App = () => {
       {/* Tariffs Section */}
       <section id="Тарифы" className="py-16 md:py-24 bg-black border-y border-zinc-800 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-center text-3xl md:text-6xl font-black mb-12 md:mb-16 uppercase text-white">
+          <h2 className="text-center text-3xl md:text-6xl font-black mb-12 md:mb-16 uppercase text-white reveal-on-scroll">
             Самые Ужасные <span className="text-red-500">Тарифы</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Tariff 1 */}
-            <div className="bg-zinc-900 border border-zinc-800 p-6 md:p-8 rounded-2xl relative hover:border-zinc-500 transition-colors group">
+            <div className="bg-zinc-900 border border-zinc-800 p-6 md:p-8 rounded-2xl relative hover:border-zinc-500 transition-colors group flex flex-col hover:-translate-y-2 duration-300 reveal-on-scroll">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-zinc-700 px-4 py-1 rounded-full text-xs font-mono uppercase">Старт (Плохо)</div>
               <h3 className="text-2xl font-black text-center mb-4">Бомж-Пакет</h3>
               <div className="text-4xl font-black text-center mb-8 font-mono">0₽ <span className="text-sm font-normal text-zinc-500">/ вдох</span></div>
-              <ul className="space-y-4 text-sm text-zinc-400">
+              <ul className="space-y-4 text-sm text-zinc-400 flex-grow">
                 <li className="flex gap-2"><X className="text-red-500 w-4 h-4 flex-shrink-0" /> <span>Нет поддержки</span></li>
                 <li className="flex gap-2"><Lock className="text-red-500 w-4 h-4 flex-shrink-0" /> <span>Блокировка счёта раз в неделю</span></li>
                 <li className="flex gap-2"><Eye className="text-green-500 w-4 h-4 flex-shrink-0" /> <span>Мы следим за вами</span></li>
               </ul>
               <button 
                 onClick={() => setShowBumMessage(true)}
-                className="w-full mt-8 py-3 border border-zinc-600 text-white font-bold uppercase hover:bg-white hover:text-black transition-colors"
+                className={`${btnSecondary} w-full mt-8 py-4`}
               >
                 Выбрать боль
               </button>
             </div>
 
             {/* Tariff 2 */}
-            <div className="bg-zinc-900 border-2 border-yellow-500 p-6 md:p-8 rounded-2xl relative transform md:scale-105 shadow-[0_0_30px_-10px_rgba(234,179,8,0.3)] z-10">
+            <div className="bg-zinc-900 border-2 border-yellow-500 p-6 md:p-8 rounded-2xl relative transform md:scale-105 shadow-[0_0_30px_-10px_rgba(234,179,8,0.3)] z-10 hover:shadow-[0_0_50px_-10px_rgba(234,179,8,0.5)] transition-all duration-300 reveal-on-scroll flex flex-col" style={{ transitionDelay: '100ms' }}>
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-4 py-1 rounded-full text-xs font-bold uppercase">Хит (Ужасно)</div>
               <h3 className="text-2xl font-black text-center mb-4 text-yellow-500">Лох-Премиум</h3>
               <div className="text-4xl font-black text-center mb-8 font-mono">999₽ <span className="text-sm font-normal text-zinc-500">/ сек</span></div>
-              <ul className="space-y-4 text-sm text-zinc-300">
+              <ul className="space-y-4 text-sm text-zinc-300 flex-grow">
                 <li className="flex gap-2"><AlertTriangle className="text-yellow-500 w-4 h-4 flex-shrink-0" /> <span>Кредит без вашего ведома</span></li>
                 <li className="flex gap-2"><AlertTriangle className="text-yellow-500 w-4 h-4 flex-shrink-0" /> <span>Личный хам-менеджер</span></li>
                 <li className="flex gap-2"><AlertTriangle className="text-yellow-500 w-4 h-4 flex-shrink-0" /> <span>Смс с угрозами (бесплатно)</span></li>
               </ul>
               <button 
                 onClick={() => setShowMiniGame(true)}
-                className="w-full mt-8 py-3 bg-yellow-500 text-black font-bold uppercase hover:bg-yellow-400 transition-colors shadow-lg"
+                className={`${btnAccent} w-full mt-8 py-4 font-black text-lg`}
               >
                 Стать жертвой
               </button>
             </div>
 
-            {/* Tariff 3 (Gnomed) */}
-            <div className="bg-zinc-900 border border-purple-900 p-6 md:p-8 rounded-2xl relative hover:border-purple-600 transition-colors group cursor-pointer" onClick={() => setShowRickRoll(true)}>
+            {/* Tariff 3 (Meme Image) */}
+            <div className="bg-zinc-900 border border-purple-900 p-6 md:p-8 rounded-2xl relative hover:border-purple-600 transition-colors group cursor-pointer flex flex-col hover:-translate-y-2 duration-300 reveal-on-scroll" style={{ transitionDelay: '200ms' }} onClick={() => setShowRickRoll(true)}>
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-900 px-4 py-1 rounded-full text-xs font-mono uppercase animate-pulse">VIP (Божественно)</div>
               <h3 className="text-2xl font-black text-center mb-4 text-purple-500">Бесконечное Счастье</h3>
               <div className="text-4xl font-black text-center mb-8 font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">Бесплатно</div>
-              <ul className="space-y-4 text-sm text-zinc-400">
+              <ul className="space-y-4 text-sm text-zinc-400 flex-grow">
                 <li className="flex gap-2"><Music className="text-purple-500 w-4 h-4 flex-shrink-0" /> <span>Вечная музыка</span></li>
                 <li className="flex gap-2"><Play className="text-purple-500 w-4 h-4 flex-shrink-0" /> <span>Эксклюзивный контент</span></li>
                 <li className="flex gap-2"><Zap className="text-purple-500 w-4 h-4 flex-shrink-0" /> <span>Вы никогда не откажетесь</span></li>
               </ul>
-              <button className="w-full mt-8 py-3 border border-purple-900 text-purple-500 font-bold uppercase hover:bg-purple-900 hover:text-white transition-colors">
+              <button className={`${btnBase} w-full mt-8 py-4 border border-purple-900 text-purple-500 hover:bg-purple-900 hover:text-white`}>
                 Получить Всё
               </button>
             </div>
@@ -623,10 +792,83 @@ const App = () => {
         </div>
       </section>
 
+      {/* Visual Sitemap (Bureaucracy Map) */}
+      <section id="Схема" className="py-20 bg-zinc-950 border-t border-zinc-800 scroll-mt-24">
+        <div className="max-w-6xl mx-auto px-4">
+           <h2 className="text-center text-3xl md:text-5xl font-black mb-16 uppercase reveal-on-scroll">
+             Схема <span className="text-yellow-500">Движения Средств</span>
+           </h2>
+           
+           <div className="flex flex-col items-center reveal-on-scroll">
+              {/* Root Node */}
+              <div className="relative group">
+                 <div className="bg-cyan-900/30 border-2 border-cyan-500 text-cyan-300 px-8 py-4 rounded-xl font-black text-xl md:text-2xl uppercase tracking-widest shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] hover:scale-105 cursor-default">
+                    ВАШИ ДЕНЬГИ
+                 </div>
+                 <div className="absolute top-full left-1/2 w-0.5 h-12 bg-zinc-700 -translate-x-1/2 transition-all duration-500 group-hover:h-16 group-hover:bg-cyan-500"></div>
+              </div>
+
+              {/* Level 1 Connectors */}
+              <div className="w-full max-w-4xl h-0.5 bg-zinc-700 mt-12 relative">
+                 <div className="absolute top-0 left-0 w-0.5 h-8 bg-zinc-700"></div>
+                 <div className="absolute top-0 left-1/2 w-0.5 h-8 bg-zinc-700 -translate-x-1/2"></div>
+                 <div className="absolute top-0 right-0 w-0.5 h-8 bg-zinc-700"></div>
+              </div>
+
+              {/* Level 1 Nodes */}
+              <div className="grid grid-cols-3 gap-4 md:gap-20 w-full max-w-5xl mt-8">
+                 <div className="flex flex-col items-center group">
+                    <div className="bg-zinc-800 border border-red-500 text-red-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-red-900/20 transition-all hover:-translate-y-1">
+                       Комиссии
+                    </div>
+                    <ArrowDown className="text-zinc-700 my-2 group-hover:text-red-500 transition-colors" />
+                    <div className="bg-zinc-900 border border-zinc-700 text-zinc-500 px-4 py-2 rounded text-[10px] md:text-xs text-center w-full group-hover:text-zinc-300">
+                       На Яхту Директора
+                    </div>
+                 </div>
+
+                 <div className="flex flex-col items-center group">
+                    <div className="bg-zinc-800 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-yellow-900/20 transition-all hover:-translate-y-1">
+                       Скрытые Платежи
+                    </div>
+                    <ArrowDown className="text-zinc-700 my-2 group-hover:text-yellow-500 transition-colors" />
+                    <div className="bg-zinc-900 border border-zinc-700 text-zinc-500 px-4 py-2 rounded text-[10px] md:text-xs text-center w-full group-hover:text-zinc-300">
+                       Корпоратив на Бали
+                    </div>
+                 </div>
+
+                 <div className="flex flex-col items-center group">
+                    <div className="bg-zinc-800 border border-purple-500 text-purple-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-purple-900/20 transition-all hover:-translate-y-1">
+                       Магия
+                    </div>
+                    <ArrowDown className="text-zinc-700 my-2 group-hover:text-purple-500 transition-colors" />
+                    <div className="bg-zinc-900 border border-zinc-700 text-zinc-500 px-4 py-2 rounded text-[10px] md:text-xs text-center w-full group-hover:text-zinc-300">
+                       В Никуда
+                    </div>
+                 </div>
+              </div>
+
+              {/* Sub-process visual */}
+              <div className="mt-16 relative w-full max-w-2xl bg-zinc-900/50 p-6 border border-dashed border-zinc-700 rounded-xl hover:border-zinc-500 transition-colors">
+                 <div className="absolute -top-3 left-6 bg-zinc-950 px-2 text-xs text-zinc-500 font-mono">ПРОЦЕСС ВОЗВРАТА СРЕДСТВ</div>
+                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-400">
+                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help">Заявка</span>
+                    <div className="hidden md:block h-px w-12 bg-zinc-700"></div>
+                    <ArrowDown className="md:hidden text-zinc-700" size={16} />
+                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help">Ожидание (∞)</span>
+                    <div className="hidden md:block h-px w-12 bg-zinc-700"></div>
+                    <ArrowDown className="md:hidden text-zinc-700" size={16} />
+                    <span className="bg-red-900/20 border border-red-900/50 text-red-500 px-3 py-2 rounded animate-pulse">Отказ</span>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </section>
+
       {/* Conditions Modal */}
       {showConditions && (
         <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
-           <button className="absolute top-4 right-4 text-zinc-500 hover:text-white" onClick={() => setShowConditions(false)}>
+           <button className="absolute top-4 right-4 text-zinc-500 hover:text-white p-4" onClick={() => setShowConditions(false)}>
               <X size={32} />
            </button>
            <ShieldAlert size={64} className="text-red-600 mb-6 animate-pulse" />
@@ -647,7 +889,7 @@ const App = () => {
           className="fixed inset-0 z-[120] bg-black flex items-center justify-center p-4 cursor-pointer"
           onClick={() => setShowBumMessage(false)}
         >
-           <h1 className="text-5xl md:text-8xl font-black text-center text-red-600 uppercase tracking-tighter animate-pulse scale-110">
+           <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-center text-red-600 uppercase tracking-tighter animate-pulse scale-110">
              Нищий бомж<br/>иди отсюда
            </h1>
         </div>
@@ -699,7 +941,7 @@ const App = () => {
                           className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded text-white focus:outline-none focus:border-cyan-500"
                         />
                       </div>
-                      <button type="submit" className="w-full bg-cyan-600 text-white font-bold uppercase py-4 mt-4 hover:bg-cyan-500 transition-colors">
+                      <button type="submit" className={`${btnPrimary} w-full mt-4 py-4`}>
                          Отдать всё
                       </button>
                    </form>
@@ -765,7 +1007,7 @@ const App = () => {
                 onMouseEnter={moveButton}
                 onTouchStart={moveButton}
                 onClick={handleGameWin}
-                className="px-6 py-3 bg-red-600 text-white font-black uppercase tracking-widest rounded shadow-xl hover:bg-red-500 whitespace-nowrap z-50 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
+                className={`${btnDanger} whitespace-nowrap z-50 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 px-6 py-3`}
              >
                 <MousePointer2 size={16} />
                 Подтвердить
@@ -774,7 +1016,7 @@ const App = () => {
         </div>
       )}
 
-      {/* Video Modal (Gnomed) */}
+      {/* Image Modal (Originally Rick Roll, now Meme) */}
       {showRickRoll && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
           <button 
@@ -783,16 +1025,12 @@ const App = () => {
           >
             <X size={24} />
           </button>
-          <div className="w-full max-w-5xl aspect-video bg-black shadow-2xl border border-zinc-800 rounded-2xl overflow-hidden relative">
-            <iframe 
-              width="100%" 
-              height="100%" 
-              src="https://www.youtube.com/embed/IUBkJaXtVBg?autoplay=1&controls=0" 
-              title="YouTube video player" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-              allowFullScreen
-            ></iframe>
+          <div className="w-full max-w-5xl h-auto bg-black shadow-2xl border border-zinc-800 rounded-2xl overflow-hidden relative flex items-center justify-center">
+            <img 
+              src="https://memchik.ru//images/memes/610ec2c7b1c7e35a2975d435.jpg" 
+              alt="Happiness" 
+              className="w-full h-auto max-h-[80vh] object-contain"
+            />
           </div>
           <div className="mt-8 text-center animate-bounce">
             <h2 className="text-3xl md:text-5xl font-black text-purple-500 uppercase">Поздравляем!</h2>
@@ -802,9 +1040,9 @@ const App = () => {
       )}
 
       {/* Team Section */}
-      <section id="Команда" className="py-16 md:py-24 bg-zinc-950 px-6">
+      <section id="Команда" className="py-16 md:py-24 bg-zinc-950 px-6 scroll-mt-24">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 uppercase">
+          <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 uppercase reveal-on-scroll">
             Руководство <span className="text-purple-500">Банка</span>
           </h2>
 
@@ -812,7 +1050,8 @@ const App = () => {
             {teamMembers.map((member, i) => (
                <div 
                  key={i} 
-                 className="group relative flex flex-col items-center"
+                 className="group relative flex flex-col items-center reveal-on-scroll"
+                 style={{ transitionDelay: `${i * 100}ms` }}
                >
                   <div className={`w-28 h-28 md:w-48 md:h-48 mx-auto ${member.color} rounded-full flex items-center justify-center mb-6 shadow-xl transform group-hover:scale-105 transition-transform duration-300 overflow-hidden border-4 border-zinc-800 group-hover:border-white cursor-pointer`} onClick={() => setSelectedMember(member)}>
                      {member.img ? (
@@ -823,11 +1062,11 @@ const App = () => {
                   </div>
                   <h3 className="font-bold text-base md:text-xl uppercase group-hover:text-purple-400 transition-colors">{member.name}</h3>
                   <div className="text-[10px] md:text-xs font-mono text-zinc-400 mb-2 uppercase tracking-wide">{member.role}</div>
-                  <p className="text-[10px] md:text-sm text-zinc-500 italic truncate px-2 mb-4 w-full">"{member.desc}"</p>
+                  <p className="text-[10px] md:text-sm text-zinc-500 italic truncate px-2 mb-4 w-full opacity-0 group-hover:opacity-100 transition-opacity">"{member.desc}"</p>
                   
                   <button 
                     onClick={() => setSelectedMember(member)}
-                    className="mt-auto px-4 py-2 border border-zinc-700 text-zinc-300 text-[10px] md:text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all rounded"
+                    className={`${btnSecondary} mt-auto px-4 py-2 text-[10px] md:text-xs`}
                   >
                     Подробнее
                   </button>
@@ -839,8 +1078,8 @@ const App = () => {
 
       {/* Team Member Modal */}
       {selectedMember && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setSelectedMember(null)}>
-          <div className="bg-zinc-900 border border-zinc-700 max-w-lg w-full p-8 md:p-12 rounded-2xl relative shadow-2xl flex flex-col items-center text-center transform scale-100 transition-all" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedMember(null)}>
+          <div className="bg-zinc-900 border border-zinc-700 max-w-lg w-full p-8 md:p-12 rounded-2xl relative shadow-2xl flex flex-col items-center text-center transform scale-100 transition-all zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <button className="absolute top-4 right-4 text-zinc-500 hover:text-white p-2" onClick={() => setSelectedMember(null)}>
               <X size={32} />
             </button>
@@ -868,24 +1107,24 @@ const App = () => {
       {/* Testimonials */}
       <section className="py-16 md:py-24 px-6 bg-zinc-900 border-t border-zinc-800">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16">
+          <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 reveal-on-scroll">
             ЧТО ГОВОРЯТ <span className="text-cyan-400">ЖЕРТВЫ</span>
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
             {reviewsToDisplay.map((review, i) => (
-              <div key={i} className="bg-zinc-950 p-6 md:p-8 border border-zinc-800 relative hover:border-cyan-500 transition-colors group flex flex-col">
+              <div key={i} className="bg-zinc-950 p-6 md:p-8 border border-zinc-800 relative hover:border-cyan-500 transition-all duration-300 hover:-translate-y-1 group flex flex-col reveal-on-scroll" style={{ transitionDelay: `${i * 50}ms` }}>
                  {/* Decorative Dots */}
                  <div className="flex gap-1 mb-6">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <div className="w-2 h-2 rounded-full bg-red-500 group-hover:animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-yellow-500 group-hover:animate-pulse delay-75"></div>
+                    <div className="w-2 h-2 rounded-full bg-green-500 group-hover:animate-pulse delay-150"></div>
                  </div>
                  
                  <p className="text-zinc-300 mb-8 leading-relaxed italic flex-grow text-sm md:text-base">"{review.text}"</p>
                  
                  <div className="flex items-center gap-4 mt-auto pt-4 border-t border-zinc-900">
-                    <div className="w-10 h-10 flex-shrink-0 bg-zinc-800 rounded-full flex items-center justify-center font-bold text-cyan-500 uppercase">
+                    <div className="w-10 h-10 flex-shrink-0 bg-zinc-800 rounded-full flex items-center justify-center font-bold text-cyan-500 uppercase group-hover:bg-cyan-900 transition-colors">
                        {review.author[0]}
                     </div>
                     <div>
@@ -900,7 +1139,7 @@ const App = () => {
           <div className="text-center">
             <button 
               onClick={() => setShowAllReviews(!showAllReviews)}
-              className="px-8 py-3 border border-zinc-600 hover:border-white text-zinc-300 hover:text-white transition-all uppercase text-sm font-bold tracking-widest"
+              className={`${btnSecondary} px-8 py-3`}
             >
                {showAllReviews ? "Свернуть Страдания" : "Ещё Больше Отзывов"}
             </button>
@@ -909,37 +1148,36 @@ const App = () => {
       </section>
 
       {/* Unique Commission Section */}
-      <section className="py-16 md:py-20 bg-blue-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div className="max-w-4xl mx-auto px-6 relative z-10 flex flex-col md:flex-row gap-12 items-center">
-           <div className="flex-1 w-full">
-              <h2 className="text-3xl md:text-4xl font-black mb-6 text-center md:text-left">Уникальная Комиссия</h2>
-              <p className="text-blue-200 text-base md:text-lg mb-8 text-center md:text-left">
+      <section className="py-20 bg-zinc-950 text-white relative overflow-hidden border-t border-zinc-900">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
+           <div className="space-y-8 reveal-on-scroll">
+              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Уникальная <br/>Комиссия</h2>
+              <p className="text-zinc-400 text-lg leading-relaxed border-l-2 border-purple-500 pl-6 max-w-xl">
                 Мы рады представить вам уникальное предложение по комиссиям, 
-                специально подобранное для уничтожения вашего счёта.
+                специально подобранное для уничтожения вашего счёта. В этой вкладке вы обнаружите 
+                индивидуальные комиссии, созданные с учетом особенностей вашего аккаунта.
               </p>
-              <div className="space-y-4">
-                 <div className="bg-white/10 p-4 rounded-lg flex justify-between items-center backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-colors cursor-help">
-                    <span className="font-bold text-sm md:text-base">Комиссия за просмотр баланса</span>
-                    <div className="text-xs md:text-sm font-mono opacity-70">100₽ / взгяд</div>
-                 </div>
-                 <div className="bg-white/10 p-4 rounded-lg flex justify-between items-center backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-colors cursor-help">
-                    <span className="font-bold text-sm md:text-base">Комиссия за смену пароля</span>
-                    <div className="text-xs md:text-sm font-mono opacity-70">500₽ + Душа</div>
-                 </div>
-                 <div className="bg-white/10 p-4 rounded-lg flex justify-between items-center backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-colors cursor-help">
-                    <span className="font-bold text-sm md:text-base">Комиссия за существование</span>
-                    <div className="text-xs md:text-sm font-mono opacity-70">Бесценно</div>
-                 </div>
-              </div>
+              <button className={`${btnBase} bg-white text-black hover:bg-zinc-200 px-8 py-3`}>
+                Узнать комиссию
+              </button>
            </div>
            
-           <div className="flex-1 flex justify-center">
-              <div className="w-56 h-56 md:w-64 md:h-64 bg-blue-800 rounded-full flex items-center justify-center relative animate-spin-slow">
-                 <div className="absolute inset-0 border-4 border-dashed border-blue-400 rounded-full animate-[spin_10s_linear_infinite]"></div>
-                 <div className="text-center transform -rotate-12">
-                    <div className="text-5xl md:text-6xl font-black">146%</div>
-                    <div className="text-lg md:text-xl font-mono uppercase">APR</div>
+           <div className="reveal-on-scroll" style={{ transitionDelay: '200ms' }}>
+              <div className="bg-purple-700 rounded-[2rem] p-8 md:p-12 shadow-[0_0_60px_rgba(126,34,206,0.3)] transform rotate-1 hover:rotate-0 transition-transform duration-500 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-50"></div>
+                 <div className="space-y-6 relative z-10">
+                    {[
+                      { name: "Комиссия за просмотр баланса", price: "???" },
+                      { name: "Комиссия за смену пароля", price: "???" },
+                      { name: "Комиссия за перевод между счетами", price: "???" },
+                      { name: "Комиссия за СМС уведомления", price: "???" },
+                      { name: "Комиссия за прокрутку страницы", price: "???" }
+                    ].map((com, i) => (
+                        <div key={i} className="flex justify-between items-center group border-b border-purple-500/30 pb-4 last:border-0 last:pb-0">
+                            <span className="font-bold text-white text-sm md:text-base pr-4 group-hover:text-purple-200 transition-colors">{com.name}</span>
+                            <span className="font-mono text-lime-400 text-lg md:text-xl font-bold">{com.price}</span>
+                        </div>
+                    ))}
                  </div>
               </div>
            </div>
@@ -949,9 +1187,9 @@ const App = () => {
       {/* Footer */}
       <footer className="bg-zinc-950 border-t border-zinc-900 py-12 px-6">
          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-               <div className="w-8 h-8 bg-cyan-900 rounded flex items-center justify-center font-mono font-bold text-cyan-400">У</div>
-               <span className="font-bold text-zinc-500">УРК БАНК &copy; 2024</span>
+            <div className="flex items-center gap-2 group cursor-pointer">
+               <div className="w-8 h-8 bg-cyan-900 rounded flex items-center justify-center font-mono font-bold text-cyan-400 group-hover:bg-cyan-600 group-hover:text-white transition-colors">У</div>
+               <span className="font-bold text-zinc-500 group-hover:text-white transition-colors">УРК БАНК &copy; 2024</span>
             </div>
             <div className="flex gap-4 md:gap-6 text-zinc-600 text-xs md:text-sm flex-wrap justify-center">
                <a href="#" className="hover:text-white transition-colors">Лицензия на хаос</a>
