@@ -292,7 +292,7 @@ const App = () => {
           if (newArray.length > 50) newArray.shift();
           return newArray;
         });
-      }, 250);
+      }, 15);
     }
     return () => clearInterval(interval);
   }, [isChaosActive]);
@@ -350,13 +350,20 @@ const App = () => {
      setShowCommissionModal(true);
   };
 
+  // Advanced Impossible Game Logic
   const moveButton = () => {
     const randomTop = Math.floor(Math.random() * 80) + 10;
     const randomLeft = Math.floor(Math.random() * 80) + 10;
     setBtnPos({ top: `${randomTop}%`, left: `${randomLeft}%` });
   };
 
-  const handleGameWin = () => {
+  const handleGameWin = (e: React.MouseEvent | React.TouchEvent) => {
+    // Impossible Logic: Even if clicked, 99% chance to just move again
+    if (Math.random() > 0.01) {
+        e.preventDefault();
+        moveButton();
+        return;
+    }
     setShowMiniGame(false);
     setShowRickRoll(true);
   };
