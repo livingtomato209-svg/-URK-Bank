@@ -32,11 +32,20 @@ import {
   CheckCircle2,
   MessageSquare,
   Send,
-  Bot
+  Bot,
+  Info
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 // --- DATA CONSTANTS ---
+
+const NAV_LINKS = [
+  { name: 'КОШЕЛЕК', target: 'wallet-section' },
+  { name: 'КАРТЫ', target: 'cards-section' },
+  { name: 'ТАРИФЫ', target: 'tariffs-section' },
+  { name: 'СХЕМА', target: 'scheme-section' },
+  { name: 'КОМАНДА', target: 'team-section' },
+];
 
 const INITIAL_REVIEWS = [
   { 
@@ -193,14 +202,6 @@ const useScrollReveal = (dependency?: any) => {
     const elements = document.querySelectorAll('.reveal-on-scroll');
     elements.forEach((el) => observer.observe(el));
 
-    // Force re-check immediately for dynamic content
-    if (dependency !== undefined) {
-      setTimeout(() => {
-        const newElements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)');
-        newElements.forEach((el) => observer.observe(el));
-      }, 100);
-    }
-
     return () => observer.disconnect();
   }, [dependency]);
 };
@@ -210,8 +211,8 @@ const useScrollReveal = (dependency?: any) => {
 const App = () => {
   const [showAllReviews, setShowAllReviews] = useState(false);
   
-  // Pass showAllReviews as dependency to ensure new items get observed
-  useScrollReveal(showAllReviews);
+  // Use scroll reveal hook
+  useScrollReveal();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
@@ -255,6 +256,9 @@ const App = () => {
   const [chaosElements, setChaosElements] = useState<{id: number, left: string, top: string}[]>([]);
   const [isChaosActive, setIsChaosActive] = useState(false);
 
+  // Scheme Section State
+  const [activeSchemeNode, setActiveSchemeNode] = useState<number | null>(null);
+
   // Derived state for reviews
   const reviewsToDisplay = showAllReviews ? [...INITIAL_REVIEWS, ...EXTRA_REVIEWS] : INITIAL_REVIEWS;
 
@@ -263,7 +267,7 @@ const App = () => {
     if (showAllReviews && reviewsRef.current) {
         setTimeout(() => {
             reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
+        }, 300);
     }
   }, [showAllReviews]);
 
@@ -350,7 +354,7 @@ const App = () => {
      setShowCommissionModal(true);
   };
 
-  // Advanced Impossible Game Logic
+  // Advanced Impossible Game Logic (Quantum Evasion)
   const moveButton = () => {
     const randomTop = Math.floor(Math.random() * 80) + 10;
     const randomLeft = Math.floor(Math.random() * 80) + 10;
@@ -358,9 +362,10 @@ const App = () => {
   };
 
   const handleGameWin = (e: React.MouseEvent | React.TouchEvent) => {
-    // Impossible Logic: Even if clicked, 99% chance to just move again
-    if (Math.random() > 0.01) {
+    // Impossible Logic: Even if clicked, 99.9% chance to just move again
+    if (Math.random() > 0.001) {
         e.preventDefault();
+        e.stopPropagation();
         moveButton();
         return;
     }
@@ -380,6 +385,15 @@ const App = () => {
     setSimStep('dashboard');
   };
 
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setIsMenuOpen(false);
+    }
+  };
+
   // Chat Logic with Real Gemini AI
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -391,10 +405,9 @@ const App = () => {
     setIsAiTyping(true);
 
     try {
-      // Use the key from environment or fallback to user provided one if env is empty in this context
-      // Note: In a real app, strictly use process.env.API_KEY. 
-      // The prompt user explicitly provided "AIzaSyCq4p1cMc1qWahWPWK1qny4vPJYuvvYtRU" for this session.
-      // I will assume the environment variable is set. If not, this logic depends on the env setup.
+      if (!process.env.API_KEY) {
+         throw new Error("API Key is missing from environment. Please configure process.env.API_KEY.");
+      }
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       const response = await ai.models.generateContent({
@@ -410,7 +423,11 @@ const App = () => {
       setChatMessages(prev => [...prev, { role: 'ai', text: aiText }]);
     } catch (error) {
       console.error("AI Error:", error);
-      setChatMessages(prev => [...prev, { role: 'ai', text: "Сервер упал, как и ваши надежды. Попробуйте позже." }]);
+      let errorMsg = "Сервер упал, как и ваши надежды. Попробуйте позже.";
+      if (error instanceof Error && error.message.includes("API Key")) {
+          errorMsg = "ОШИБКА: API ключ не найден. ИИ отказывается работать бесплатно.";
+      }
+      setChatMessages(prev => [...prev, { role: 'ai', text: errorMsg }]);
     } finally {
       setIsAiTyping(false);
     }
@@ -434,7 +451,7 @@ const App = () => {
     return () => clearInterval(interval);
   }, [showAccountSim, simStep]);
 
-  // Button Style Constants - Updated to unified Base
+  // Button Style Constants - Unified Base
   const btnBase = "font-bold uppercase tracking-widest transition-all duration-300 transform hover:scale-105 active:rotate-1 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900";
   
   const btnPrimary = `${btnBase} bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_20px_-5px_rgba(8,145,178,0.5)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.8)] hover:-translate-y-1`;
@@ -469,7 +486,7 @@ const App = () => {
       {/* Navigation */}
       <nav className="fixed w-full z-50 glass-panel border-b border-white/5 backdrop-blur-md bg-black/80 md:bg-black/50 transition-all duration-500">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 z-50 group cursor-pointer">
+          <div className="flex items-center gap-2 z-50 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="w-8 h-8 md:w-10 md:h-10 bg-cyan-600 rounded-lg flex items-center justify-center transform -rotate-6 border-2 border-yellow-400 shadow-[0_0_15px_rgba(6,182,212,0.5)] group-hover:rotate-0 transition-transform duration-300">
               <span className="font-mono font-black text-lg md:text-xl text-yellow-300">У</span>
             </div>
@@ -477,9 +494,14 @@ const App = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-6 xl:gap-8 font-mono text-xs xl:text-sm uppercase tracking-widest text-zinc-400">
-            {['Кошелек', 'Карты', 'Тарифы', 'Схема', 'Команда'].map((item) => (
-              <a key={item} href={`#${item}`} className="hover:text-cyan-400 transition-colors relative group py-2">
-                {item}
+            {NAV_LINKS.map((item) => (
+              <a 
+                key={item.name} 
+                href={`#${item.target}`} 
+                onClick={(e) => handleNavClick(e, item.target)}
+                className="hover:text-cyan-400 transition-colors relative group py-2"
+              >
+                {item.name}
                 <span className="absolute bottom-0 left-0 w-0 h-px bg-cyan-500 group-hover:w-full transition-all duration-300 ease-out"></span>
               </a>
             ))}
@@ -489,7 +511,7 @@ const App = () => {
              {/* Support Trigger */}
             <button 
               onClick={() => setIsSupportOpen(true)}
-              className="font-mono text-xs uppercase text-zinc-400 hover:text-white flex items-center gap-2 mr-2"
+              className="font-mono text-xs uppercase text-zinc-400 hover:text-white flex items-center gap-2 mr-2 border border-zinc-700 px-3 py-2 rounded-md hover:border-zinc-500 transition-colors"
             >
               <HelpCircle size={16} />
               Поддержка
@@ -509,33 +531,37 @@ const App = () => {
 
         {/* Mobile Menu Overlay */}
         <div 
-          className={`fixed inset-0 z-40 bg-zinc-950 flex flex-col items-center justify-center gap-8 transition-all duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto visible' : 'opacity-0 pointer-events-none invisible'}`}
+          className={`fixed inset-0 z-40 bg-zinc-950/95 backdrop-blur-xl flex flex-col items-center justify-center gap-8 transition-all duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto visible' : 'opacity-0 pointer-events-none invisible'}`}
         >
-             {['Кошелек', 'Карты', 'Тарифы', 'Схема', 'Команда'].map((item, idx) => (
+             {NAV_LINKS.map((item) => (
               <a 
-                key={item} 
-                href={`#${item}`} 
+                key={item.name} 
+                href={`#${item.target}`} 
                 className="text-4xl font-black text-white hover:text-cyan-400 uppercase tracking-tighter transform transition-all hover:scale-110 active:scale-95"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={(e) => handleNavClick(e, item.target)}
               >
-                {item}
+                {item.name}
               </a>
             ))}
-            <button onClick={() => { setIsSupportOpen(true); setIsMenuOpen(false); }} className="text-xl font-mono uppercase text-zinc-400 border border-zinc-700 px-6 py-2 rounded-full mt-4">Поддержка</button>
-            <button 
-              onClick={() => {
-                enterChaos();
-                setIsMenuOpen(false);
-              }}
-              className={`${btnAccent} mt-4 px-10 py-3 text-lg transform -rotate-2`}
-            >
-              Войти в Хаос
-            </button>
+            <div className="flex flex-col gap-4 w-full max-w-xs px-6 mt-8">
+                <button onClick={() => { setIsSupportOpen(true); setIsMenuOpen(false); }} className="w-full text-lg font-mono uppercase text-white border border-zinc-700 hover:bg-zinc-800 px-6 py-3 rounded-xl flex items-center justify-center gap-3">
+                    <HelpCircle size={20} /> Поддержка
+                </button>
+                <button 
+                onClick={() => {
+                    enterChaos();
+                    setIsMenuOpen(false);
+                }}
+                className={`${btnAccent} w-full py-4 text-xl`}
+                >
+                Войти в Хаос
+                </button>
+            </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section id="Кошелек" className="relative pt-24 pb-12 md:pt-48 md:pb-32 px-4 md:px-6 overflow-hidden scroll-mt-24">
+      <section id="wallet-section" className="relative pt-24 pb-12 md:pt-48 md:pb-32 px-4 md:px-6 overflow-hidden scroll-mt-24">
         {/* Parallax Blobs */}
         <div className="absolute top-20 left-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-pulse"></div>
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-cyan-600/20 rounded-full blur-[120px] animate-pulse delay-700"></div>
@@ -654,7 +680,7 @@ const App = () => {
                                 </div>
 
                                 <span className="text-black font-mono text-[10px] md:text-xs uppercase font-bold">Ваш Долг</span>
-                                <div className="text-2xl md:text-3xl font-black text-black mt-1">$-9,999.99</div>
+                                <div className="text-2xl md:text-3xl font-black text-black mt-1">52,6769.61</div>
                                 <div className="mt-4 flex gap-2">
                                     <button 
                                     onMouseDown={(e) => e.stopPropagation()}
@@ -704,7 +730,7 @@ const App = () => {
       </section>
 
       {/* Cards Collection Section */}
-      <section id="Карты" className="py-16 md:py-24 bg-zinc-900 border-y border-zinc-800 relative overflow-hidden scroll-mt-24">
+      <section id="cards-section" className="py-16 md:py-24 bg-zinc-900 border-y border-zinc-800 relative overflow-hidden scroll-mt-24">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="mb-10 md:mb-16 text-center reveal-on-scroll">
             <h2 className="text-3xl md:text-6xl font-black uppercase mb-4 md:mb-6">
@@ -842,7 +868,7 @@ const App = () => {
       </section>
 
       {/* Tariffs Section */}
-      <section id="Тарифы" className="py-16 md:py-24 bg-black border-y border-zinc-800 scroll-mt-20">
+      <section id="tariffs-section" className="py-16 md:py-24 bg-black border-y border-zinc-800 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-center text-3xl md:text-6xl font-black mb-12 md:mb-16 uppercase text-white reveal-on-scroll">
             Самые Ужасные <span className="text-red-500">Тарифы</span>
@@ -904,7 +930,7 @@ const App = () => {
       </section>
 
       {/* Visual Sitemap (Bureaucracy Map) */}
-      <section id="Схема" className="py-20 bg-zinc-950 border-t border-zinc-800 scroll-mt-24">
+      <section id="scheme-section" className="py-20 bg-zinc-950 border-t border-zinc-800 scroll-mt-24">
         <div className="max-w-6xl mx-auto px-4">
            <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 uppercase reveal-on-scroll">
              Схема <span className="text-yellow-500">Движения Средств</span>
@@ -912,65 +938,117 @@ const App = () => {
            
            <div className="flex flex-col items-center reveal-on-scroll">
               {/* Root Node */}
-              <div className="relative group">
+              <div className="relative group z-20">
                  <div className="bg-cyan-900/30 border-2 border-cyan-500 text-cyan-300 px-6 md:px-8 py-3 md:py-4 rounded-xl font-black text-lg md:text-2xl uppercase tracking-widest shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] hover:scale-105 cursor-default text-center">
                     ВАШИ ДЕНЬГИ
                  </div>
-                 <div className="absolute top-full left-1/2 w-0.5 h-12 bg-zinc-700 -translate-x-1/2 transition-all duration-500 group-hover:h-16 group-hover:bg-cyan-500"></div>
+                 <div className="absolute top-full left-1/2 w-0.5 h-12 bg-zinc-700 -translate-x-1/2 transition-all duration-500 group-hover:h-12 group-hover:bg-cyan-500"></div>
               </div>
 
-              {/* Level 1 Connectors */}
-              <div className="w-full max-w-4xl h-0.5 bg-zinc-700 mt-12 relative hidden md:block">
-                 <div className="absolute top-0 left-0 w-0.5 h-8 bg-zinc-700"></div>
-                 <div className="absolute top-0 left-1/2 w-0.5 h-8 bg-zinc-700 -translate-x-1/2"></div>
-                 <div className="absolute top-0 right-0 w-0.5 h-8 bg-zinc-700"></div>
+              {/* Level 1 Connectors - Interactive SVG */}
+              <div className="relative w-full max-w-4xl mt-12 hidden md:block h-8">
+                 <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                    {/* Left Path */}
+                    <path 
+                      d="M50% 0 L17% 0 L17% 100%" 
+                      fill="none" 
+                      stroke={activeSchemeNode === 0 ? '#ef4444' : '#3f3f46'} 
+                      strokeWidth={activeSchemeNode === 0 ? 3 : 2}
+                      className="transition-all duration-300 ease-out"
+                    />
+                    {/* Center Path */}
+                    <path 
+                      d="M50% 0 L50% 100%" 
+                      fill="none" 
+                      stroke={activeSchemeNode === 1 ? '#eab308' : '#3f3f46'} 
+                      strokeWidth={activeSchemeNode === 1 ? 3 : 2}
+                      className="transition-all duration-300 ease-out"
+                    />
+                    {/* Right Path */}
+                    <path 
+                      d="M50% 0 L83% 0 L83% 100%" 
+                      fill="none" 
+                      stroke={activeSchemeNode === 2 ? '#a855f7' : '#3f3f46'} 
+                      strokeWidth={activeSchemeNode === 2 ? 3 : 2}
+                      className="transition-all duration-300 ease-out"
+                    />
+                    {/* Dot at Top Center */}
+                    <circle cx="50%" cy="0" r="4" fill="#06b6d4" />
+                 </svg>
               </div>
 
               {/* Level 1 Nodes - Vertical stack on mobile, Grid on desktop */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-20 w-full max-w-5xl mt-8 md:mt-8">
-                 <div className="flex flex-col items-center group relative">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-20 w-full max-w-5xl mt-8 md:mt-0">
+                 {/* Node 1: Commissions */}
+                 <div 
+                   className="flex flex-col items-center group relative z-20"
+                   onMouseEnter={() => setActiveSchemeNode(0)}
+                   onMouseLeave={() => setActiveSchemeNode(null)}
+                 >
                     <div className="absolute -top-8 w-0.5 h-8 bg-zinc-700 md:hidden"></div>
-                    <div className="bg-zinc-800 border border-red-500 text-red-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-red-900/20 transition-all hover:-translate-y-1">
+                    <div className={`bg-zinc-800 border-2 ${activeSchemeNode === 0 ? 'border-red-500 scale-105 shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'border-red-500/50'} text-red-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full transition-all duration-300 cursor-help`}>
                        Комиссии
                     </div>
-                    <ArrowDown className="text-zinc-700 my-2 group-hover:text-red-500 transition-colors" />
-                    <div className="bg-zinc-900 border border-zinc-700 text-zinc-500 px-4 py-2 rounded text-[10px] md:text-xs text-center w-full group-hover:text-zinc-300">
+                    <ArrowDown className={`text-zinc-700 my-2 transition-colors duration-300 ${activeSchemeNode === 0 ? 'text-red-500' : ''}`} />
+                    <div className={`bg-zinc-900 border ${activeSchemeNode === 0 ? 'border-red-500 text-white' : 'border-zinc-700 text-zinc-500'} px-4 py-2 rounded text-[10px] md:text-xs text-center w-full transition-all duration-300`}>
                        На Яхту Директора
                     </div>
                  </div>
 
-                 <div className="flex flex-col items-center group relative">
+                 {/* Node 2: Hidden Fees */}
+                 <div 
+                   className="flex flex-col items-center group relative z-20"
+                   onMouseEnter={() => setActiveSchemeNode(1)}
+                   onMouseLeave={() => setActiveSchemeNode(null)}
+                 >
                     <div className="absolute -top-8 w-0.5 h-8 bg-zinc-700 md:hidden"></div>
-                    <div className="bg-zinc-800 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-yellow-900/20 transition-all hover:-translate-y-1">
+                    <div className={`bg-zinc-800 border-2 ${activeSchemeNode === 1 ? 'border-yellow-500 scale-105 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'border-yellow-500/50'} text-yellow-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full transition-all duration-300 cursor-help`}>
                        Скрытые Платежи
                     </div>
-                    <ArrowDown className="text-zinc-700 my-2 group-hover:text-yellow-500 transition-colors" />
-                    <div className="bg-zinc-900 border border-zinc-700 text-zinc-500 px-4 py-2 rounded text-[10px] md:text-xs text-center w-full group-hover:text-zinc-300">
+                    <ArrowDown className={`text-zinc-700 my-2 transition-colors duration-300 ${activeSchemeNode === 1 ? 'text-yellow-500' : ''}`} />
+                    <div className={`bg-zinc-900 border ${activeSchemeNode === 1 ? 'border-yellow-500 text-white' : 'border-zinc-700 text-zinc-500'} px-4 py-2 rounded text-[10px] md:text-xs text-center w-full transition-all duration-300`}>
                        Корпоратив на Бали
                     </div>
                  </div>
 
-                 <div className="flex flex-col items-center group relative">
+                 {/* Node 3: Magic */}
+                 <div 
+                   className="flex flex-col items-center group relative z-20"
+                   onMouseEnter={() => setActiveSchemeNode(2)}
+                   onMouseLeave={() => setActiveSchemeNode(null)}
+                 >
                     <div className="absolute -top-8 w-0.5 h-8 bg-zinc-700 md:hidden"></div>
-                    <div className="bg-zinc-800 border border-purple-500 text-purple-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-purple-900/20 transition-all hover:-translate-y-1">
+                    <div className={`bg-zinc-800 border-2 ${activeSchemeNode === 2 ? 'border-purple-500 scale-105 shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'border-purple-500/50'} text-purple-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full transition-all duration-300 cursor-help`}>
                        Магия
                     </div>
-                    <ArrowDown className="text-zinc-700 my-2 group-hover:text-purple-500 transition-colors" />
-                    <div className="bg-zinc-900 border border-zinc-700 text-zinc-500 px-4 py-2 rounded text-[10px] md:text-xs text-center w-full group-hover:text-zinc-300">
+                    <ArrowDown className={`text-zinc-700 my-2 transition-colors duration-300 ${activeSchemeNode === 2 ? 'text-purple-500' : ''}`} />
+                    <div className={`bg-zinc-900 border ${activeSchemeNode === 2 ? 'border-purple-500 text-white' : 'border-zinc-700 text-zinc-500'} px-4 py-2 rounded text-[10px] md:text-xs text-center w-full transition-all duration-300`}>
                        В Никуда
                     </div>
                  </div>
               </div>
 
-              {/* Sub-process visual */}
-              <div className="mt-16 relative w-full max-w-2xl bg-zinc-900/50 p-6 border border-dashed border-zinc-700 rounded-xl hover:border-zinc-500 transition-colors">
-                 <div className="absolute -top-3 left-6 bg-zinc-950 px-2 text-xs text-zinc-500 font-mono">ПРОЦЕСС ВОЗВРАТА СРЕДСТВ</div>
+              {/* Sub-process visual with Tooltip */}
+              <div className="mt-16 relative w-full max-w-2xl bg-zinc-900/50 p-6 border border-dashed border-zinc-700 rounded-xl hover:border-zinc-500 transition-colors group">
+                 
+                 {/* Tooltip */}
+                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 bg-zinc-800 text-zinc-200 text-xs p-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-zinc-700 text-center">
+                    <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-800 border-b border-r border-zinc-700 transform rotate-45"></div>
+                    <span className="font-bold text-cyan-400 block mb-1">СЕКРЕТНЫЙ ПРОТОКОЛ</span>
+                    Это бесконечный цикл бюрократии, разработанный для максимального унижения клиента.
+                 </div>
+
+                 <div className="absolute -top-3 left-6 bg-zinc-950 px-2 text-xs text-zinc-500 font-mono flex items-center gap-2">
+                    ПРОЦЕСС ВОЗВРАТА СРЕДСТВ 
+                    <Info size={12} className="text-zinc-600 group-hover:text-cyan-500 transition-colors" />
+                 </div>
+                 
                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-400">
-                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help w-full md:w-auto text-center">Заявка</span>
-                    <div className="hidden md:block h-px w-12 bg-zinc-700"></div>
+                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help w-full md:w-auto text-center hover:border-cyan-500">Заявка</span>
+                    <div className="hidden md:block h-px w-12 bg-zinc-700 group-hover:bg-cyan-900 transition-colors"></div>
                     <ArrowDown className="md:hidden text-zinc-700" size={16} />
-                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help w-full md:w-auto text-center">Ожидание (∞)</span>
-                    <div className="hidden md:block h-px w-12 bg-zinc-700"></div>
+                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help w-full md:w-auto text-center hover:border-cyan-500">Ожидание (∞)</span>
+                    <div className="hidden md:block h-px w-12 bg-zinc-700 group-hover:bg-cyan-900 transition-colors"></div>
                     <ArrowDown className="md:hidden text-zinc-700" size={16} />
                     <span className="bg-red-900/20 border border-red-900/50 text-red-500 px-3 py-2 rounded animate-pulse w-full md:w-auto text-center">Отказ</span>
                  </div>
@@ -1204,6 +1282,7 @@ const App = () => {
             <img 
               src="https://memchik.ru//images/memes/610ec2c7b1c7e35a2975d435.jpg" 
               alt="Happiness" 
+              loading="lazy"
               className="w-full h-auto max-h-[80vh] object-contain"
             />
           </div>
@@ -1264,7 +1343,7 @@ const App = () => {
       </div>
 
       {/* Team Section */}
-      <section id="Команда" className="py-16 md:py-24 bg-zinc-950 px-4 md:px-6 scroll-mt-24">
+      <section id="team-section" className="py-16 md:py-24 bg-zinc-950 px-4 md:px-6 scroll-mt-24">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 uppercase reveal-on-scroll">
             Руководство <span className="text-purple-500">Банка</span>
@@ -1280,7 +1359,7 @@ const App = () => {
                >
                   <div className={`w-16 h-16 flex-shrink-0 ${member.color} rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-zinc-700 group-hover:border-white transition-colors`}>
                      {member.img ? (
-                       <img src={member.img} alt={member.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                       <img src={member.img} alt={member.name} loading="lazy" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                      ) : (
                        <User size={32} className="opacity-50" />
                      )}
@@ -1315,7 +1394,7 @@ const App = () => {
             
             <div className={`w-32 h-32 md:w-56 md:h-56 rounded-full overflow-hidden mb-6 md:mb-8 border-4 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.4)] flex-shrink-0`}>
               {selectedMember.img ? (
-                <img src={selectedMember.img} alt={selectedMember.name} className="w-full h-full object-cover" />
+                <img src={selectedMember.img} alt={selectedMember.name} loading="lazy" className="w-full h-full object-cover" />
               ) : (
                 <div className={`w-full h-full ${selectedMember.color} flex items-center justify-center`}>
                    <User size={64} />
@@ -1344,7 +1423,7 @@ const App = () => {
             {reviewsToDisplay.map((review, i) => (
               <div 
                 key={i} 
-                className="bg-zinc-950 p-6 md:p-8 border border-zinc-800 relative hover:border-cyan-500 transition-all duration-300 hover:-translate-y-1 group flex flex-col reveal-on-scroll animate-in slide-in-from-bottom-2 fade-in fill-mode-forwards" 
+                className="bg-zinc-950 p-6 md:p-8 border border-zinc-800 relative hover:border-cyan-500 transition-all duration-300 hover:-translate-y-1 group flex flex-col animate-in slide-in-from-bottom-2 fade-in fill-mode-forwards" 
                 style={{ animationDelay: `${i * 50}ms`, animationDuration: '500ms' }}
               >
                  {/* Decorative Dots */}
@@ -1400,13 +1479,13 @@ const App = () => {
                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-50"></div>
                  <div className="space-y-4 md:space-y-6 relative z-10">
                     {[
-                      { name: "Комиссия за просмотр баланса", price: "???", link: "#Кошелек" },
+                      { name: "Комиссия за просмотр баланса", price: "???", link: "#wallet-section" },
                       { name: "Комиссия за смену пароля", price: "???", link: "#app-container" },
-                      { name: "Комиссия за перевод между счетами", price: "???", link: "#Карты" },
-                      { name: "Комиссия за СМС уведомления", price: "???", link: "#Тарифы" },
-                      { name: "Комиссия за прокрутку страницы", price: "???", link: "#Схема" }
+                      { name: "Комиссия за перевод между счетами", price: "???", link: "#cards-section" },
+                      { name: "Комиссия за СМС уведомления", price: "???", link: "#tariffs-section" },
+                      { name: "Комиссия за прокрутку страницы", price: "???", link: "#scheme-section" }
                     ].map((com, i) => (
-                        <a key={i} href={com.link} className="flex justify-between items-center group border-b border-purple-500/30 pb-3 md:pb-4 last:border-0 last:pb-0 hover:bg-purple-600/20 px-2 -mx-2 rounded transition-colors cursor-pointer">
+                        <a key={i} href={com.link} onClick={(e) => handleNavClick(e, com.link.replace('#', ''))} className="flex justify-between items-center group border-b border-purple-500/30 pb-3 md:pb-4 last:border-0 last:pb-0 hover:bg-purple-600/20 px-2 -mx-2 rounded transition-colors cursor-pointer">
                             <span className="font-bold text-white text-xs md:text-base pr-4 group-hover:text-purple-200 transition-colors underline decoration-dotted decoration-purple-400/50">{com.name}</span>
                             <span className="font-mono text-lime-400 text-base md:text-xl font-bold">{com.price}</span>
                         </a>
