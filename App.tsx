@@ -27,13 +27,145 @@ import {
   Wrench,
   GitGraph,
   ArrowDown,
-  CornerDownRight
+  CornerDownRight,
+  Newspaper,
+  CheckCircle2
 } from 'lucide-react';
 
-// --- CUSTOM HOOKS ---
+// --- DATA CONSTANTS (Moved outside component for stability) ---
 
-// Hook to handle scroll animations
-const useScrollReveal = () => {
+const INITIAL_REVIEWS = [
+  { 
+    text: "Оформил карту, а потом нашёл в договоре пункт о передаче души. Но кэшбек на гречку того стоит!",
+    author: "Виталий Заплатин",
+    role: "Потерял надежду"
+  },
+  { 
+    text: "Пользуюсь УРК уже месяц. Баланс отрицательный, но зато дизайн карты красивый. Спасибо за эстетику нищеты!",
+    author: "Алексей Муткин",
+    role: "Вечный должник"
+  },
+  { 
+    text: "Уже три месяца с УРК, и до сих пор не могу разобраться, за что плачу. Кажется, за воздух в офисе.",
+    author: "Евгений Доверчи",
+    role: "Любитель квестов"
+  },
+  { 
+    text: "УРК — банк, который всегда рядом... как коллектор под дверью.",
+    author: "Николай Веритин",
+    role: "Спонсор банка"
+  },
+  { 
+    text: "Каждый раз думаю: 'Ну, на этот раз без комиссии!' И каждый раз ошибаюсь. Но уже привык!",
+    author: "Иван Заплатищев",
+    role: "Оптимист"
+  },
+  { 
+    text: "Всё так просто и понятно... на первый взгляд. УРК учит быть бдительным и параноиком.",
+    author: "Александр Платеж",
+    role: "Параноик"
+  }
+];
+
+const EXTRA_REVIEWS = [
+  {
+    text: "Служба поддержки ответила мне через 3 года. Сказали 'Ожидайте'. Лучший сервис!",
+    author: "Мария Ждунова",
+    role: "Хатико"
+  },
+  {
+    text: "Карта 'Злодейский Пластик' реально работает! Кассиры пугаются и не просят паспорт.",
+    author: "Глеб Жеглов",
+    role: "Авторитет"
+  },
+  {
+    text: "Списали деньги за то, что я слишком долго смотрел на банкомат. Справедливо.",
+    author: "Сергей Зоркий",
+    role: "Наблюдатель"
+  },
+  {
+    text: "После открытия вклада ко мне домой пришел кот и съел мой ужин. Сказали, это процент по ставке.",
+    author: "Анна Кормова",
+    role: "Кошатница"
+  }
+];
+
+const FUNNY_TRANSACTIONS_LIST = [
+  "Взятка полиции",
+  "Налог на существование",
+  "Покупка бесполезного товара",
+  "Подписка на депрессию",
+  "Штраф за красивое лицо",
+  "Комиссия за комиссию",
+  "Донат генеральному директору",
+  "Аренда воздуха",
+  "Плата за вход в приложение",
+  "Списание просто так",
+  "Налог на бедность",
+  "Инвестиция в никуда"
+];
+
+const TEAM_MEMBERS = [
+  { 
+    name: "FIKOL / NEGR", 
+    role: "Генеральный Директор", 
+    color: "bg-orange-600", 
+    desc: "Молчание — золото.",
+    fullDesc: "Легендарный физик-теоретик, который переквалифицировался в финансового тирана. Никогда не говорит ни слова, но один его взгляд заставляет акции падать. Управляет банком с помощью монтировки.",
+    img: "https://upload.wikimedia.org/wikipedia/en/a/a5/Gordon_Freeman.png" 
+  },
+  { 
+    name: "Патрик", 
+    role: "Слияния и Поглощения", 
+    color: "bg-zinc-800", 
+    desc: "Любит визитки.",
+    fullDesc: "Его визитка имеет лучший шрифт, чем у вас. Занимается 'слияниями' конкурентов с асфальтом. Увлекается музыкой 80-х и уходом за кожей.",
+    img: "https://i.redd.it/77bvnk555ffc1.png" 
+  },
+  { 
+    name: "Эллиот", 
+    role: "Кибербезопасность", 
+    color: "bg-black border border-white/20", 
+    desc: "Никому не доверяет.",
+    fullDesc: "Взломал наш банк, чтобы устроиться на работу. Теперь он взламывает клиентов, чтобы они не расслаблялись. Разговаривает с воображаемым другом о курсе биткоина.",
+    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdpePG5yJFHhAvQVWyWB9zer83v0hZIyOafw&s"
+  },
+  { 
+    name: "Сол", 
+    role: "Юридический Отдел", 
+    color: "bg-yellow-500 text-black", 
+    desc: "Всё законно... почти.",
+    fullDesc: "Знает, как превратить финансовую пирамиду в 'инновационный многоуровневый маркетинг'. Если вас посадили за наши кредиты — лучше звоните ему.",
+    img: "https://upload.wikimedia.org/wikipedia/en/3/34/Jimmy_McGill_BCS_S3.png"
+  },
+  { 
+    name: "Джесси", 
+    role: "Логистика", 
+    color: "bg-yellow-200 text-black", 
+    desc: "Наука, бич!",
+    fullDesc: "Отвечает за доставку наличных. Иногда наличные теряются, но он всегда находит оправдание. Любит магниты.",
+    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd8EkQv-38wHJr_xe-ZZGeoKhKZik_UUXOsA&s"
+  },
+  { 
+    name: "Уолтер", 
+    role: "Химик-Технолог", 
+    color: "bg-green-700", 
+    desc: "Варит лучший продукт.",
+    fullDesc: "Мы сами не знаем, что он делает в банке. Но его 'синий лёд' (замороженные активы) пользуется огромным спросом. Не стучите в его дверь.",
+    img: "https://upload.wikimedia.org/wikipedia/en/0/03/Walter_White_S5B.png"
+  },
+  { 
+    name: "G-Man", 
+    role: "Куратор", 
+    color: "bg-blue-900", 
+    desc: "Непредсказуемые последствия.",
+    fullDesc: "Появляется раз в месяц, поправляет галстук и исчезает. Зарплату получает в антиматерии. Контролирует время обработки ваших транзакций.",
+    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnTcbTVgWrITbJQFdU_x2AJCQWckUI8YcCFw&s"
+  },
+];
+
+// Custom Hook to handle scroll animations
+const useScrollReveal = (dependency?: any) => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -50,23 +182,30 @@ const useScrollReveal = () => {
     elements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
-  }, []);
+  }, [dependency]);
 };
 
-// --- COMPONENTS ---
+// --- MAIN COMPONENT ---
 
 const App = () => {
-  useScrollReveal(); // Initialize scroll animations
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  
+  // Pass showAllReviews as dependency to ensure new items get observed
+  useScrollReveal(showAllReviews);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showAllReviews, setShowAllReviews] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+  
+  const reviewsRef = useRef<HTMLDivElement>(null);
   
   // Modals State
   const [showRickRoll, setShowRickRoll] = useState(false); 
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [showBumMessage, setShowBumMessage] = useState(false);
   const [showConditions, setShowConditions] = useState(false);
+  const [showNewsModal, setShowNewsModal] = useState(false);
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [commissionAmount, setCommissionAmount] = useState(0);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
   
   // Account Simulator State
   const [showAccountSim, setShowAccountSim] = useState(false);
@@ -88,19 +227,36 @@ const App = () => {
   const [chaosElements, setChaosElements] = useState<{id: number, left: string, top: string}[]>([]);
   const [isChaosActive, setIsChaosActive] = useState(false);
 
-  // Chaos Effect
+  // Derived state for reviews
+  const reviewsToDisplay = showAllReviews ? [...INITIAL_REVIEWS, ...EXTRA_REVIEWS] : INITIAL_REVIEWS;
+
+  // Auto-scroll when reviews expand
+  useEffect(() => {
+    if (showAllReviews && reviewsRef.current) {
+        // Scroll slightly to reveal new content if expanded
+        // setTimeout to allow render to complete
+        setTimeout(() => {
+            reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
+    }
+  }, [showAllReviews]);
+
+  // Chaos Effect - Limit to 50 elements for performance
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isChaosActive) {
       interval = setInterval(() => {
-        setChaosElements(prev => [
-          ...prev, 
-          {
+        setChaosElements(prev => {
+          const newItem = {
             id: Date.now(),
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`
-          }
-        ]);
+          };
+          // Keep only last 50 items
+          const newArray = [...prev, newItem];
+          if (newArray.length > 50) newArray.shift();
+          return newArray;
+        });
       }, 250);
     }
     return () => clearInterval(interval);
@@ -150,144 +306,16 @@ const App = () => {
   };
 
   const handleGetNews = () => {
-    console.log("Fetching latest news...");
-    alert("НОВОСТИ: Генеральный директор запретил буквы 'А' в именах сотрудников. Акции упали, но потом взлетели, потому что это смешно.");
+    // Shows the News Modal instead of an alert
+    setShowNewsModal(true);
   };
 
-  // Reviews Data
-  const initialReviews = [
-    { 
-      text: "Оформил карту, а потом нашёл в договоре пункт о передаче души. Но кэшбек на гречку того стоит!",
-      author: "Виталий Заплатин",
-      role: "Потерял надежду"
-    },
-    { 
-      text: "Пользуюсь УРК уже месяц. Баланс отрицательный, но зато дизайн карты красивый. Спасибо за эстетику нищеты!",
-      author: "Алексей Муткин",
-      role: "Вечный должник"
-    },
-    { 
-      text: "Уже три месяца с УРК, и до сих пор не могу разобраться, за что плачу. Кажется, за воздух в офисе.",
-      author: "Евгений Доверчи",
-      role: "Любитель квестов"
-    },
-    { 
-      text: "УРК — банк, который всегда рядом... как коллектор под дверью.",
-      author: "Николай Веритин",
-      role: "Спонсор банка"
-    },
-    { 
-      text: "Каждый раз думаю: 'Ну, на этот раз без комиссии!' И каждый раз ошибаюсь. Но уже привык!",
-      author: "Иван Заплатищев",
-      role: "Оптимист"
-    },
-    { 
-      text: "Всё так просто и понятно... на первый взгляд. УРК учит быть бдительным и параноиком.",
-      author: "Александр Платеж",
-      role: "Параноик"
-    }
-  ];
-
-  const extraReviews = [
-    {
-      text: "Служба поддержки ответила мне через 3 года. Сказали 'Ожидайте'. Лучший сервис!",
-      author: "Мария Ждунова",
-      role: "Хатико"
-    },
-    {
-      text: "Карта 'Злодейский Пластик' реально работает! Кассиры пугаются и не просят паспорт.",
-      author: "Глеб Жеглов",
-      role: "Авторитет"
-    },
-    {
-      text: "Списали деньги за то, что я слишком долго смотрел на банкомат. Справедливо.",
-      author: "Сергей Зоркий",
-      role: "Наблюдатель"
-    },
-    {
-      text: "После открытия вклада ко мне домой пришел кот и съел мой ужин. Сказали, это процент по ставке.",
-      author: "Анна Кормова",
-      role: "Кошатница"
-    }
-  ];
-
-  const reviewsToDisplay = showAllReviews ? [...initialReviews, ...extraReviews] : initialReviews;
-
-  // Funny Transactions for Simulator
-  const funnyTransactionsList = [
-    "Взятка полиции",
-    "Налог на существование",
-    "Покупка бесполезного товара",
-    "Подписка на депрессию",
-    "Штраф за красивое лицо",
-    "Комиссия за комиссию",
-    "Донат генеральному директору",
-    "Аренда воздуха",
-    "Плата за вход в приложение",
-    "Списание просто так",
-    "Налог на бедность",
-    "Инвестиция в никуда"
-  ];
-
-  // Team Data
-  const teamMembers = [
-    { 
-      name: "FIKOL / NEGR", 
-      role: "Генеральный Директор", 
-      color: "bg-orange-600", 
-      desc: "Молчание — золото.",
-      fullDesc: "Легендарный физик-теоретик, который переквалифицировался в финансового тирана. Никогда не говорит ни слова, но один его взгляд заставляет акции падать. Управляет банком с помощью монтировки.",
-      img: "https://upload.wikimedia.org/wikipedia/en/a/a5/Gordon_Freeman.png" 
-    },
-    { 
-      name: "Патрик", 
-      role: "Слияния и Поглощения", 
-      color: "bg-zinc-800", 
-      desc: "Любит визитки.",
-      fullDesc: "Его визитка имеет лучший шрифт, чем у вас. Занимается 'слияниями' конкурентов с асфальтом. Увлекается музыкой 80-х и уходом за кожей.",
-      img: "https://i.redd.it/77bvnk555ffc1.png" 
-    },
-    { 
-      name: "Эллиот", 
-      role: "Кибербезопасность", 
-      color: "bg-black border border-white/20", 
-      desc: "Никому не доверяет.",
-      fullDesc: "Взломал наш банк, чтобы устроиться на работу. Теперь он взламывает клиентов, чтобы они не расслаблялись. Разговаривает с воображаемым другом о курсе биткоина.",
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdpePG5yJFHhAvQVWyWB9zer83v0hZIyOafw&s"
-    },
-    { 
-      name: "Сол", 
-      role: "Юридический Отдел", 
-      color: "bg-yellow-500 text-black", 
-      desc: "Всё законно... почти.",
-      fullDesc: "Знает, как превратить финансовую пирамиду в 'инновационный многоуровневый маркетинг'. Если вас посадили за наши кредиты — лучше звоните ему.",
-      img: "https://upload.wikimedia.org/wikipedia/en/3/34/Jimmy_McGill_BCS_S3.png"
-    },
-    { 
-      name: "Джесси", 
-      role: "Логистика", 
-      color: "bg-yellow-200 text-black", 
-      desc: "Наука, бич!",
-      fullDesc: "Отвечает за доставку наличных. Иногда наличные теряются, но он всегда находит оправдание. Любит магниты.",
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd8EkQv-38wHJr_xe-ZZGeoKhKZik_UUXOsA&s"
-    },
-    { 
-      name: "Уолтер", 
-      role: "Химик-Технолог", 
-      color: "bg-green-700", 
-      desc: "Варит лучший продукт.",
-      fullDesc: "Мы сами не знаем, что он делает в банке. Но его 'синий лёд' (замороженные активы) пользуется огромным спросом. Не стучите в его дверь.",
-      img: "https://upload.wikimedia.org/wikipedia/en/0/03/Walter_White_S5B.png"
-    },
-    { 
-      name: "G-Man", 
-      role: "Куратор", 
-      color: "bg-blue-900", 
-      desc: "Непредсказуемые последствия.",
-      fullDesc: "Появляется раз в месяц, поправляет галстук и исчезает. Зарплату получает в антиматерии. Контролирует время обработки ваших транзакций.",
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnTcbTVgWrITbJQFdU_x2AJCQWckUI8YcCFw&s"
-    },
-  ];
+  const handleKnowCommission = () => {
+     // Replaced alert with State + Modal
+     const randomCommission = Math.floor(Math.random() * 10000) + 500;
+     setCommissionAmount(randomCommission);
+     setShowCommissionModal(true);
+  };
 
   const moveButton = () => {
     const randomTop = Math.floor(Math.random() * 80) + 10;
@@ -318,7 +346,7 @@ const App = () => {
     if (showAccountSim && simStep === 'dashboard') {
       interval = setInterval(() => {
         const amount = Math.floor(Math.random() * 5000) + 100;
-        const title = funnyTransactionsList[Math.floor(Math.random() * funnyTransactionsList.length)];
+        const title = FUNNY_TRANSACTIONS_LIST[Math.floor(Math.random() * FUNNY_TRANSACTIONS_LIST.length)];
         
         setSimBalance(prev => prev - amount);
         setSimTransactions(prev => [
@@ -332,11 +360,12 @@ const App = () => {
 
   // Button Style Constants
   const btnBase = "font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900";
-  const btnPrimary = `${btnBase} bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_20px_-5px_rgba(8,145,178,0.5)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.8)] hover:-translate-y-1`;
-  const btnSecondary = `${btnBase} border border-zinc-600 text-zinc-300 hover:border-white hover:text-white hover:bg-white/5`;
-  const btnDanger = `${btnBase} bg-red-600 text-white hover:bg-red-500 shadow-lg`;
-  const btnAccent = `${btnBase} bg-yellow-400 text-black hover:bg-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.5)]`;
+  const btnPrimary = `${btnBase} bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_20px_-5px_rgba(8,145,178,0.5)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.8)] hover:-translate-y-1 hover:scale-105 active:rotate-1`;
+  const btnSecondary = `${btnBase} border border-zinc-600 text-zinc-300 hover:border-white hover:text-white hover:bg-white/5 hover:scale-105 active:rotate-1`;
+  const btnDanger = `${btnBase} bg-red-600 text-white hover:bg-red-500 shadow-lg hover:scale-105 active:rotate-1`;
+  const btnAccent = `${btnBase} bg-yellow-400 text-black hover:bg-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.5)] hover:scale-105 active:rotate-1`;
 
+  // --- RENDER ---
   return (
     <div id="app-container" className="min-h-screen bg-zinc-950 text-white overflow-x-hidden relative font-sans scroll-smooth">
       {/* Background Grid Pattern */}
@@ -362,12 +391,12 @@ const App = () => {
 
       {/* Navigation */}
       <nav className="fixed w-full z-50 glass-panel border-b border-white/5 backdrop-blur-md bg-black/80 md:bg-black/50 transition-all duration-500">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 z-50 group cursor-pointer">
-            <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center transform -rotate-6 border-2 border-yellow-400 shadow-[0_0_15px_rgba(6,182,212,0.5)] group-hover:rotate-0 transition-transform duration-300">
-              <span className="font-mono font-black text-xl text-yellow-300">У</span>
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-cyan-600 rounded-lg flex items-center justify-center transform -rotate-6 border-2 border-yellow-400 shadow-[0_0_15px_rgba(6,182,212,0.5)] group-hover:rotate-0 transition-transform duration-300">
+              <span className="font-mono font-black text-lg md:text-xl text-yellow-300">У</span>
             </div>
-            <span className="text-2xl font-black tracking-tighter uppercase font-mono text-cyan-500 group-hover:text-cyan-400 transition-colors">УРК<span className="text-white">БАНК</span></span>
+            <span className="text-xl md:text-2xl font-black tracking-tighter uppercase font-mono text-cyan-500 group-hover:text-cyan-400 transition-colors">УРК<span className="text-white">БАНК</span></span>
           </div>
 
           <div className="hidden md:flex items-center gap-8 font-mono text-sm uppercase tracking-widest text-zinc-400">
@@ -389,7 +418,7 @@ const App = () => {
           </div>
 
           <button className="md:hidden text-white z-50 p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={32} /> : <Menu size={32} />}
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
 
@@ -399,7 +428,7 @@ const App = () => {
               <a 
                 key={item} 
                 href={`#${item}`} 
-                className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-500 hover:to-cyan-400 uppercase tracking-tighter transform transition-transform hover:scale-110"
+                className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-500 hover:to-cyan-400 uppercase tracking-tighter transform transition-transform hover:scale-110 py-2 px-4"
                 style={{ transitionDelay: `${idx * 50}ms` }}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -411,7 +440,7 @@ const App = () => {
                 enterChaos();
                 setIsMenuOpen(false);
               }}
-              className={`${btnAccent} mt-8 px-12 py-4 text-lg transform -rotate-2`}
+              className={`${btnAccent} mt-8 px-10 py-3 text-lg transform -rotate-2`}
             >
               Войти в Хаос
             </button>
@@ -419,8 +448,12 @@ const App = () => {
       </nav>
 
       {/* Hero Section */}
-      <section id="Кошелек" className="relative pt-32 pb-12 md:pt-48 md:pb-32 px-6 overflow-hidden scroll-mt-24">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative z-10">
+      <section id="Кошелек" className="relative pt-24 pb-12 md:pt-48 md:pb-32 px-4 md:px-6 overflow-hidden scroll-mt-24">
+        {/* Parallax Blobs */}
+        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-cyan-600/20 rounded-full blur-[120px] animate-pulse delay-700"></div>
+
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center relative z-10">
           
           <div className="space-y-6 md:space-y-8 order-2 lg:order-1 reveal-on-scroll">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 font-mono text-[10px] md:text-xs uppercase tracking-widest animate-pulse">
@@ -428,34 +461,35 @@ const App = () => {
               Осторожно: Высокие ставки
             </div>
             
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black leading-[0.9] tracking-tighter uppercase break-words">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black leading-[0.95] md:leading-[0.9] tracking-tighter uppercase break-words">
               Банк <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient-x">Которого Вы Боитесь</span>
             </h1>
             
-            <p className="text-zinc-400 text-sm sm:text-base md:text-xl max-w-xl leading-relaxed border-l-2 border-yellow-500 pl-6">
+            <p className="text-zinc-400 text-sm sm:text-base md:text-xl max-w-xl leading-relaxed border-l-2 border-yellow-500 pl-4 md:pl-6">
               УРК БАНК — это не просто финансы. Это испытание воли. 
               Скачайте приложение и попробуйте найти кнопку "Выход". 
               Спойлер: её нет.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button 
                 onClick={handleOpenSimulator}
-                className={`${btnPrimary} w-full sm:w-auto px-8 py-3`}
+                className={`${btnPrimary} w-full sm:w-auto px-6 py-3 text-sm md:text-base`}
               >
                 Открыть Счёт (Рискнуть)
               </button>
               <button 
                 onClick={() => setShowConditions(true)}
-                className={`${btnSecondary} w-full sm:w-auto px-8 py-3`}
+                className={`${btnSecondary} w-full sm:w-auto px-6 py-3 text-sm md:text-base`}
               >
                 Читать Условия
               </button>
               <button 
                 onClick={handleGetNews}
-                className={`${btnPrimary} w-full sm:w-auto px-8 py-3`}
+                className={`${btnPrimary} w-full sm:w-auto px-6 py-3 text-sm md:text-base flex items-center justify-center gap-2`}
               >
+                <Newspaper size={18} />
                 Получить Новости
               </button>
             </div>
@@ -466,21 +500,19 @@ const App = () => {
                 { icon: TrendingDown, label: 'Отрицательный Рост' },
                 { icon: Skull, label: 'Пожизненная Ипотека' }
               ].map((feature, idx) => (
-                <div key={idx} className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-help bg-zinc-900/50 p-2 rounded-lg border border-transparent hover:border-zinc-700 hover:scale-105 transform duration-300">
-                  <feature.icon className="w-5 h-5 text-zinc-500" />
-                  <span className="text-xs font-mono uppercase leading-tight">{feature.label}</span>
+                <div key={idx} className="flex items-center gap-2 md:gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-help bg-zinc-900/50 p-2 rounded-lg border border-transparent hover:border-zinc-700 hover:scale-105 transform duration-300">
+                  <feature.icon className="w-4 h-4 md:w-5 md:h-5 text-zinc-500" />
+                  <span className="text-[10px] md:text-xs font-mono uppercase leading-tight">{feature.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="relative h-[500px] md:h-[600px] w-full flex items-center justify-center lg:justify-end perspective-[1000px] order-1 lg:order-2 reveal-on-scroll" style={{ transitionDelay: '200ms' }}>
-             {/* Abstract Decorative Elements */}
-             <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent rounded-full blur-[80px] md:blur-[100px] animate-pulse pointer-events-none"></div>
-
+          <div className="relative h-[450px] md:h-[600px] w-full flex items-center justify-center lg:justify-end perspective-[1000px] order-1 lg:order-2 reveal-on-scroll" style={{ transitionDelay: '200ms' }}>
+             
              {/* Phone Mockup (Interactive) */}
              <div 
-                className={`w-[90vw] max-w-[320px] h-[80vh] max-h-[640px] bg-zinc-950 rounded-[2rem] md:rounded-[3rem] border-4 md:border-8 border-zinc-800 shadow-2xl overflow-hidden transition-transform ease-out flex-shrink-0
+                className={`w-[85vw] max-w-[300px] md:max-w-[320px] h-[70vh] max-h-[550px] md:max-h-[640px] bg-zinc-950 rounded-[2rem] md:rounded-[3rem] border-4 md:border-8 border-zinc-800 shadow-2xl overflow-hidden transition-transform ease-out flex-shrink-0 relative
                 ${!isRunning ? 'hover:rotate-0 rotate-y-[-10deg] rotate-x-[5deg] hover:shadow-cyan-500/20' : ''}
                 ${isRunning ? 'translate-x-[200vw] rotate-[120deg] duration-1000' : ''}
              `}>
@@ -495,17 +527,17 @@ const App = () => {
                     <div className="w-full h-full bg-zinc-900 flex flex-col p-4 md:p-6 relative overflow-y-auto custom-scrollbar select-none">
                       {panicCount !== null ? (
                         <div className="absolute inset-0 z-[60] bg-red-600 flex items-center justify-center flex-col animate-pulse">
-                          <h2 className="text-9xl font-black text-white">{panicCount}</h2>
-                          <p className="text-white font-mono uppercase mt-4 font-bold">Самоуничтожение</p>
+                          <h2 className="text-8xl md:text-9xl font-black text-white">{panicCount}</h2>
+                          <p className="text-white font-mono uppercase mt-4 font-bold text-sm md:text-base">Самоуничтожение</p>
                         </div>
                       ) : null}
 
                       {/* Explosion View */}
                       {isExploded ? (
                         <div className="absolute inset-0 z-[70] bg-black flex items-center justify-center flex-col p-6 text-center animate-in zoom-in duration-300">
-                            <Flame size={64} className="text-orange-500 animate-bounce mb-4" />
-                            <h2 className="text-2xl font-black text-white uppercase mb-2">БА-БАХ!</h2>
-                            <p className="text-zinc-400 text-sm mb-6">Телефон уничтожен. Но кредит остался.</p>
+                            <Flame size={48} className="text-orange-500 animate-bounce mb-4 md:w-16 md:h-16" />
+                            <h2 className="text-xl md:text-2xl font-black text-white uppercase mb-2">БА-БАХ!</h2>
+                            <p className="text-zinc-400 text-xs md:text-sm mb-6">Телефон уничтожен. Но кредит остался.</p>
                             <button 
                                 onClick={() => setIsExploded(false)}
                                 className={`${btnSecondary} px-4 py-2 text-xs flex items-center gap-2 justify-center w-full`}
@@ -515,7 +547,7 @@ const App = () => {
                         </div>
                       ) : (
                         <>
-                            <div className="mt-8 flex justify-between items-center flex-shrink-0">
+                            <div className="mt-6 md:mt-8 flex justify-between items-center flex-shrink-0">
                                 <span className="font-mono text-[10px] md:text-xs text-zinc-500 uppercase tracking-widest">УРК Mobile</span>
                                 <div className="flex gap-1">
                                 <div className="w-1 h-1 bg-cyan-400 rounded-full animate-ping"></div>
@@ -523,7 +555,7 @@ const App = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-6 md:mt-8 p-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg relative overflow-hidden group flex-shrink-0 hover:shadow-orange-500/50 transition-shadow duration-300">
+                            <div className="mt-4 md:mt-8 p-5 md:p-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg relative overflow-hidden group flex-shrink-0 hover:shadow-orange-500/50 transition-shadow duration-300">
                                 {/* Collapse Button */}
                                 <div 
                                     onMouseDown={(e) => e.stopPropagation()}
@@ -531,30 +563,30 @@ const App = () => {
                                     className="absolute top-0 right-0 p-2 opacity-50 hover:opacity-100 cursor-pointer transition-opacity z-50 hover:scale-110 duration-200" 
                                     title="Обрушить экономику"
                                 >
-                                    <TrendingDown className="text-black w-8 h-8" />
+                                    <TrendingDown className="text-black w-6 h-6 md:w-8 md:h-8" />
                                 </div>
 
-                                <span className="text-black font-mono text-xs uppercase font-bold">Ваш Долг</span>
+                                <span className="text-black font-mono text-[10px] md:text-xs uppercase font-bold">Ваш Долг</span>
                                 <div className="text-2xl md:text-3xl font-black text-black mt-1">$-9,999.99</div>
                                 <div className="mt-4 flex gap-2">
                                     <button 
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={handlePanic}
-                                    className="px-3 py-1 bg-black/20 rounded-md text-black text-[10px] font-bold uppercase cursor-pointer hover:bg-black/30 active:scale-95 transition-transform"
+                                    className="px-2 md:px-3 py-1 bg-black/20 rounded-md text-black text-[9px] md:text-[10px] font-bold uppercase cursor-pointer hover:bg-black/30 active:scale-95 transition-transform"
                                     >
                                     Паника
                                     </button>
                                     <button 
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={handleRun}
-                                    className="px-3 py-1 bg-black/10 rounded-md text-black text-[10px] font-bold uppercase cursor-pointer hover:bg-black/20 active:scale-95 transition-transform"
+                                    className="px-2 md:px-3 py-1 bg-black/10 rounded-md text-black text-[9px] md:text-[10px] font-bold uppercase cursor-pointer hover:bg-black/20 active:scale-95 transition-transform"
                                     >
                                     Бежать
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="mt-6 space-y-3 pb-20">
+                            <div className="mt-4 md:mt-6 space-y-2 md:space-y-3 pb-20">
                                 {[
                                     { icon: Briefcase, title: 'Взятка Мэру', sub: 'Автоплатеж', amount: '-$500.00', color: 'cyan' },
                                     { icon: Ghost, title: 'Подписка на Ничто', sub: 'Ежесекундно', amount: '-$0.99', color: 'purple' },
@@ -563,24 +595,24 @@ const App = () => {
                                 ].map((item, idx) => (
                                     <div key={idx} className="p-3 md:p-4 bg-zinc-800/50 rounded-xl flex items-center justify-between border border-zinc-700/50 hover:bg-zinc-800 transition-colors cursor-pointer group">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 bg-${item.color}-500/20 rounded-full flex items-center justify-center text-${item.color}-400 group-hover:scale-110 transition-transform`}>
+                                            <div className={`w-7 h-7 md:w-8 md:h-8 bg-${item.color}-500/20 rounded-full flex items-center justify-center text-${item.color}-400 group-hover:scale-110 transition-transform`}>
                                                 <item.icon size={14} />
                                             </div>
                                             <div>
-                                            <div className="text-sm font-bold">{item.title}</div>
-                                            <div className="text-[10px] text-zinc-500">{item.sub}</div>
+                                            <div className="text-xs md:text-sm font-bold">{item.title}</div>
+                                            <div className="text-[9px] md:text-[10px] text-zinc-500">{item.sub}</div>
                                             </div>
                                         </div>
-                                        <span className="text-red-400 font-mono text-sm">{item.amount}</span>
+                                        <span className="text-red-400 font-mono text-xs md:text-sm">{item.amount}</span>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Annoying Notification */}
-                            <div className="absolute bottom-10 left-4 right-4 bg-red-600 text-white p-3 rounded-lg text-xs font-bold shadow-2xl transform hover:scale-105 transition-transform cursor-pointer border border-red-400 animate-bounce">
-                                <div className="flex justify-between items-start">
+                            <div className="absolute bottom-6 md:bottom-10 left-4 right-4 bg-red-600 text-white p-3 rounded-lg text-[10px] md:text-xs font-bold shadow-2xl transform hover:scale-105 transition-transform cursor-pointer border border-red-400 animate-bounce z-10">
+                                <div className="flex justify-between items-start gap-2">
                                 <span>ВНИМАНИЕ! Ваш пароль слишком простой. Смените его на иероглифы.</span>
-                                <X size={12} className="opacity-50" />
+                                <X size={12} className="opacity-70" />
                                 </div>
                             </div>
                         </>
@@ -594,8 +626,8 @@ const App = () => {
 
       {/* Cards Collection Section */}
       <section id="Карты" className="py-16 md:py-24 bg-zinc-900 border-y border-zinc-800 relative overflow-hidden scroll-mt-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-12 md:mb-16 text-center reveal-on-scroll">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="mb-10 md:mb-16 text-center reveal-on-scroll">
             <h2 className="text-3xl md:text-6xl font-black uppercase mb-4 md:mb-6">
               Выбери Свою <span className="text-cyan-400">Судьбу</span>
             </h2>
@@ -644,7 +676,7 @@ const App = () => {
                    
                    {/* Rocket */}
                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-400 opacity-20 group-hover:opacity-40 transition-opacity animate-float">
-                      <Rocket size={150} strokeWidth={1} className="md:w-[180px] md:h-[180px]" />
+                      <Rocket size={150} strokeWidth={1} className="w-[120px] h-[120px] md:w-[180px] md:h-[180px]" />
                    </div>
 
                    {/* Neon Border Mockup */}
@@ -679,7 +711,7 @@ const App = () => {
                    
                    {/* Tree Rune Center */}
                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-green-300 opacity-20 group-hover:opacity-100 transition-opacity duration-700">
-                      <TreeDeciduous size={130} strokeWidth={1} className="md:w-[160px] md:h-[160px]" />
+                      <TreeDeciduous size={130} strokeWidth={1} className="w-[120px] h-[120px] md:w-[160px] md:h-[160px]" />
                       <div className="absolute inset-0 border-4 border-green-500 rounded-full animate-spin-slow opacity-30 border-dashed"></div>
                    </div>
 
@@ -705,7 +737,7 @@ const App = () => {
                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 border border-red-600 rounded-full opacity-40 group-hover:rotate-90 transition-transform duration-[2000ms]"></div>
                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-36 h-36 md:w-48 md:h-48 border-2 border-dashed border-orange-600 rounded-full opacity-40 animate-spin-slow"></div>
                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                      <Flame size={60} className="text-orange-500 opacity-20 md:w-[80px] md:h-[80px]" />
+                      <Flame size={60} className="text-orange-500 opacity-20 w-[60px] h-[60px] md:w-[80px] md:h-[80px]" />
                    </div>
 
                    {/* Black Strip */}
@@ -795,29 +827,30 @@ const App = () => {
       {/* Visual Sitemap (Bureaucracy Map) */}
       <section id="Схема" className="py-20 bg-zinc-950 border-t border-zinc-800 scroll-mt-24">
         <div className="max-w-6xl mx-auto px-4">
-           <h2 className="text-center text-3xl md:text-5xl font-black mb-16 uppercase reveal-on-scroll">
+           <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 uppercase reveal-on-scroll">
              Схема <span className="text-yellow-500">Движения Средств</span>
            </h2>
            
            <div className="flex flex-col items-center reveal-on-scroll">
               {/* Root Node */}
               <div className="relative group">
-                 <div className="bg-cyan-900/30 border-2 border-cyan-500 text-cyan-300 px-8 py-4 rounded-xl font-black text-xl md:text-2xl uppercase tracking-widest shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] hover:scale-105 cursor-default">
+                 <div className="bg-cyan-900/30 border-2 border-cyan-500 text-cyan-300 px-6 md:px-8 py-3 md:py-4 rounded-xl font-black text-lg md:text-2xl uppercase tracking-widest shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] hover:scale-105 cursor-default text-center">
                     ВАШИ ДЕНЬГИ
                  </div>
                  <div className="absolute top-full left-1/2 w-0.5 h-12 bg-zinc-700 -translate-x-1/2 transition-all duration-500 group-hover:h-16 group-hover:bg-cyan-500"></div>
               </div>
 
               {/* Level 1 Connectors */}
-              <div className="w-full max-w-4xl h-0.5 bg-zinc-700 mt-12 relative">
+              <div className="w-full max-w-4xl h-0.5 bg-zinc-700 mt-12 relative hidden md:block">
                  <div className="absolute top-0 left-0 w-0.5 h-8 bg-zinc-700"></div>
                  <div className="absolute top-0 left-1/2 w-0.5 h-8 bg-zinc-700 -translate-x-1/2"></div>
                  <div className="absolute top-0 right-0 w-0.5 h-8 bg-zinc-700"></div>
               </div>
 
-              {/* Level 1 Nodes */}
-              <div className="grid grid-cols-3 gap-4 md:gap-20 w-full max-w-5xl mt-8">
-                 <div className="flex flex-col items-center group">
+              {/* Level 1 Nodes - Vertical stack on mobile, Grid on desktop */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-20 w-full max-w-5xl mt-8 md:mt-8">
+                 <div className="flex flex-col items-center group relative">
+                    <div className="absolute -top-8 w-0.5 h-8 bg-zinc-700 md:hidden"></div>
                     <div className="bg-zinc-800 border border-red-500 text-red-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-red-900/20 transition-all hover:-translate-y-1">
                        Комиссии
                     </div>
@@ -827,7 +860,8 @@ const App = () => {
                     </div>
                  </div>
 
-                 <div className="flex flex-col items-center group">
+                 <div className="flex flex-col items-center group relative">
+                    <div className="absolute -top-8 w-0.5 h-8 bg-zinc-700 md:hidden"></div>
                     <div className="bg-zinc-800 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-yellow-900/20 transition-all hover:-translate-y-1">
                        Скрытые Платежи
                     </div>
@@ -837,7 +871,8 @@ const App = () => {
                     </div>
                  </div>
 
-                 <div className="flex flex-col items-center group">
+                 <div className="flex flex-col items-center group relative">
+                    <div className="absolute -top-8 w-0.5 h-8 bg-zinc-700 md:hidden"></div>
                     <div className="bg-zinc-800 border border-purple-500 text-purple-400 px-4 py-3 rounded-lg font-bold uppercase text-xs md:text-sm text-center w-full hover:bg-purple-900/20 transition-all hover:-translate-y-1">
                        Магия
                     </div>
@@ -852,13 +887,13 @@ const App = () => {
               <div className="mt-16 relative w-full max-w-2xl bg-zinc-900/50 p-6 border border-dashed border-zinc-700 rounded-xl hover:border-zinc-500 transition-colors">
                  <div className="absolute -top-3 left-6 bg-zinc-950 px-2 text-xs text-zinc-500 font-mono">ПРОЦЕСС ВОЗВРАТА СРЕДСТВ</div>
                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-400">
-                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help">Заявка</span>
+                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help w-full md:w-auto text-center">Заявка</span>
                     <div className="hidden md:block h-px w-12 bg-zinc-700"></div>
                     <ArrowDown className="md:hidden text-zinc-700" size={16} />
-                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help">Ожидание (∞)</span>
+                    <span className="bg-black border border-zinc-800 px-3 py-2 rounded hover:text-white transition-colors cursor-help w-full md:w-auto text-center">Ожидание (∞)</span>
                     <div className="hidden md:block h-px w-12 bg-zinc-700"></div>
                     <ArrowDown className="md:hidden text-zinc-700" size={16} />
-                    <span className="bg-red-900/20 border border-red-900/50 text-red-500 px-3 py-2 rounded animate-pulse">Отказ</span>
+                    <span className="bg-red-900/20 border border-red-900/50 text-red-500 px-3 py-2 rounded animate-pulse w-full md:w-auto text-center">Отказ</span>
                  </div>
               </div>
            </div>
@@ -867,29 +902,90 @@ const App = () => {
 
       {/* Conditions Modal */}
       {showConditions && (
-        <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
-           <button className="absolute top-4 right-4 text-zinc-500 hover:text-white p-4" onClick={() => setShowConditions(false)}>
-              <X size={32} />
-           </button>
-           <ShieldAlert size={64} className="text-red-600 mb-6 animate-pulse" />
-           <h2 className="text-3xl md:text-5xl font-black uppercase text-red-500 mb-4">Предупреждение</h2>
-           <p className="text-xl text-zinc-300 max-w-2xl mb-8">
-             Нажимая любую кнопку на этом сайте, вы автоматически соглашаетесь на передачу своей бессмертной души, 
-             имущества и права на счастье в собственность УРК БАНК. 
-           </p>
-           <p className="text-xs text-zinc-600 font-mono">
-             * Возврат души невозможен. Претензии принимаются только в письменном виде на санскрите.
-           </p>
+        <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300 overflow-y-auto">
+           <div className="relative max-w-2xl w-full flex flex-col items-center">
+                <button className="absolute top-0 right-0 text-zinc-500 hover:text-white p-2" onClick={() => setShowConditions(false)}>
+                    <X size={32} />
+                </button>
+                <ShieldAlert size={64} className="text-red-600 mb-6 animate-pulse" />
+                <h2 className="text-3xl md:text-5xl font-black uppercase text-red-500 mb-4">Предупреждение</h2>
+                <p className="text-lg md:text-xl text-zinc-300 mb-8">
+                    Нажимая любую кнопку на этом сайте, вы автоматически соглашаетесь на передачу своей бессмертной души, 
+                    имущества и права на счастье в собственность УРК БАНК. 
+                </p>
+                <p className="text-xs text-zinc-600 font-mono">
+                    * Возврат души невозможен. Претензии принимаются только в письменном виде на санскрите.
+                </p>
+                <button className={`${btnPrimary} mt-8 px-8 py-3`} onClick={() => setShowConditions(false)}>Я Согласен На Страдания</button>
+           </div>
+        </div>
+      )}
+
+      {/* Commission Modal */}
+      {showCommissionModal && (
+        <div className="fixed inset-0 z-[150] bg-black/95 flex flex-col items-center justify-center p-4 text-center animate-in zoom-in duration-300 overflow-y-auto" onClick={() => setShowCommissionModal(false)}>
+           <div className="bg-zinc-900 border-4 border-purple-500 p-6 md:p-10 rounded-3xl max-w-lg w-full relative shadow-[0_0_100px_rgba(168,85,247,0.5)] my-auto" onClick={e => e.stopPropagation()}>
+               <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-purple-600 text-white px-6 py-2 rounded-full font-bold uppercase shadow-lg text-xs md:text-sm whitespace-nowrap">Результат Анализа</div>
+               <h2 className="text-xl md:text-2xl font-bold text-zinc-400 mb-4 mt-4">Ваша индивидуальная комиссия:</h2>
+               <div className="text-5xl md:text-6xl font-black text-white font-mono mb-2 tracking-tighter">
+                  {commissionAmount} ₽
+               </div>
+               <div className="text-purple-400 text-sm font-mono uppercase mb-8">В секунду</div>
+               <div className="flex flex-col gap-3">
+                   <div className="flex items-center gap-2 text-xs text-zinc-500 justify-center">
+                       <CheckCircle2 size={12} className="text-green-500" />
+                       <span>Учитывая цвет ваших глаз</span>
+                   </div>
+                   <div className="flex items-center gap-2 text-xs text-zinc-500 justify-center">
+                       <CheckCircle2 size={12} className="text-green-500" />
+                       <span>Учитывая фазу луны</span>
+                   </div>
+               </div>
+               <button className={`${btnPrimary} w-full mt-8 py-4`} onClick={() => setShowCommissionModal(false)}>
+                   Спасибо, я в восторге
+               </button>
+           </div>
+        </div>
+      )}
+
+      {/* News Modal */}
+      {showNewsModal && (
+        <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in duration-300 overflow-y-auto" onClick={() => setShowNewsModal(false)}>
+           <div className="bg-zinc-900 border-2 border-cyan-500 p-6 md:p-8 rounded-2xl max-w-lg w-full relative shadow-[0_0_50px_rgba(6,182,212,0.3)] my-auto" onClick={e => e.stopPropagation()}>
+              <button className="absolute top-4 right-4 text-zinc-500 hover:text-white" onClick={() => setShowNewsModal(false)}>
+                 <X size={24} />
+              </button>
+              
+              <div className="flex items-center gap-3 mb-6 border-b border-zinc-800 pb-4">
+                 <Newspaper className="text-cyan-400 w-6 h-6 md:w-8 md:h-8" />
+                 <h2 className="text-xl md:text-2xl font-black uppercase text-white tracking-widest">Срочные Новости</h2>
+              </div>
+              
+              <div className="space-y-4">
+                  <div className="bg-black/50 p-4 rounded border-l-4 border-red-500">
+                     <h3 className="text-red-400 font-bold uppercase text-xs mb-1">Экстренно</h3>
+                     <p className="text-zinc-200 text-sm md:text-base">Генеральный директор FIKOL запретил букву "А" в именах сотрудников. Александр теперь "лексндр". Акции банка выросли на 0.00%.</p>
+                  </div>
+                  <div className="bg-black/50 p-4 rounded border-l-4 border-yellow-500">
+                     <h3 className="text-yellow-400 font-bold uppercase text-xs mb-1">Экономика</h3>
+                     <p className="text-zinc-200 text-sm md:text-base">Мы ввели налог на бедность. Теперь, если у вас 0 рублей, вы должны банку 500 рублей за обслуживание нуля.</p>
+                  </div>
+              </div>
+              
+              <button className={`${btnPrimary} w-full mt-6`} onClick={() => setShowNewsModal(false)}>
+                 Осознать и Принять
+              </button>
+           </div>
         </div>
       )}
 
       {/* Bum Message Overlay */}
       {showBumMessage && (
         <div 
-          className="fixed inset-0 z-[120] bg-black flex items-center justify-center p-4 cursor-pointer"
+          className="fixed inset-0 z-[120] bg-black flex items-center justify-center p-4 cursor-pointer overflow-hidden"
           onClick={() => setShowBumMessage(false)}
         >
-           <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-center text-red-600 uppercase tracking-tighter animate-pulse scale-110">
+           <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-center text-red-600 uppercase tracking-tighter animate-pulse scale-110 break-words">
              Нищий бомж<br/>иди отсюда
            </h1>
         </div>
@@ -897,12 +993,12 @@ const App = () => {
 
       {/* Account Simulator Modal */}
       {showAccountSim && (
-        <div className="fixed inset-0 z-[110] bg-black flex items-center justify-center p-0 md:p-4">
+        <div className="fixed inset-0 z-[110] bg-black flex items-center justify-center p-0 md:p-4 overflow-y-auto">
            <button className="absolute top-4 right-4 text-white z-50 bg-zinc-800 rounded-full p-2" onClick={() => setShowAccountSim(false)}>
               <X size={24} />
            </button>
            
-           <div className="w-full h-full md:max-w-md md:h-[800px] bg-zinc-950 md:rounded-[3rem] border-4 border-zinc-800 relative overflow-hidden flex flex-col">
+           <div className="w-full h-full md:max-w-md md:h-[80vh] md:max-h-[800px] bg-zinc-950 md:rounded-[3rem] border-4 border-zinc-800 relative overflow-hidden flex flex-col my-auto">
               {/* Dynamic Header */}
               <div className="bg-zinc-900 p-6 pt-12 pb-4 flex justify-between items-center border-b border-zinc-800">
                  <div className="font-mono text-xs uppercase text-zinc-500">УРК ID: {Math.floor(Math.random() * 99999)}</div>
@@ -910,7 +1006,7 @@ const App = () => {
               </div>
 
               {simStep === 'form' ? (
-                <div className="flex-1 flex flex-col justify-center p-8 space-y-6">
+                <div className="flex-1 flex flex-col justify-center p-8 space-y-6 overflow-y-auto">
                    <h2 className="text-3xl font-black uppercase text-center text-white">Регистрация <br/>Жертвы</h2>
                    <form onSubmit={startSimulation} className="space-y-4">
                       <div>
@@ -945,15 +1041,15 @@ const App = () => {
                          Отдать всё
                       </button>
                    </form>
-                   <p className="text-[10px] text-center text-zinc-600">
+                   <p className="text-[10px] text-center text-zinc-600 pb-8">
                       Нажимая кнопку, вы соглашаетесь с тем, что ваша жизнь больше вам не принадлежит.
                    </p>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col bg-black">
-                   <div className="p-8 bg-gradient-to-b from-red-900 to-black text-center">
+                <div className="flex-1 flex flex-col bg-black h-full">
+                   <div className="p-8 bg-gradient-to-b from-red-900 to-black text-center flex-shrink-0">
                       <div className="text-xs font-mono uppercase text-red-300 mb-2">Ваш Текущий Баланс</div>
-                      <div className="text-4xl font-black text-red-500 font-mono tracking-tighter">
+                      <div className="text-3xl md:text-4xl font-black text-red-500 font-mono tracking-tighter">
                          {simBalance.toLocaleString()} ₽
                       </div>
                       <div className="mt-2 text-[10px] uppercase bg-red-950/50 text-red-400 inline-block px-2 py-1 rounded animate-pulse">
@@ -982,14 +1078,14 @@ const App = () => {
 
        {/* Mini Game Modal */}
        {showMiniGame && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 overflow-hidden">
           <button className="absolute top-4 right-4 text-zinc-500 hover:text-white p-2" onClick={() => setShowMiniGame(false)}>
             <X size={32} />
           </button>
           
           <div className="relative w-full max-w-2xl h-[400px] bg-zinc-900 border-2 border-yellow-500 rounded-2xl overflow-hidden flex flex-col items-center justify-center select-none shadow-[0_0_50px_rgba(234,179,8,0.2)]">
-             <h2 className="absolute top-6 text-2xl md:text-3xl font-black text-yellow-500 uppercase tracking-widest text-center px-4">
-               Подтверждение <br/><span className="text-white text-base font-mono">Вы точно хотите это?</span>
+             <h2 className="absolute top-6 text-xl md:text-3xl font-black text-yellow-500 uppercase tracking-widest text-center px-4">
+               Подтверждение <br/><span className="text-white text-sm md:text-base font-mono">Вы точно хотите это?</span>
              </h2>
              
              <div className="absolute inset-0 z-0 opacity-10 pointer-events-none grid grid-cols-6 grid-rows-4">
@@ -1016,7 +1112,7 @@ const App = () => {
         </div>
       )}
 
-      {/* Image Modal (Originally Rick Roll, now Meme) */}
+      {/* Image Modal (Meme) */}
       {showRickRoll && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
           <button 
@@ -1033,40 +1129,40 @@ const App = () => {
             />
           </div>
           <div className="mt-8 text-center animate-bounce">
-            <h2 className="text-3xl md:text-5xl font-black text-purple-500 uppercase">Поздравляем!</h2>
-            <p className="text-zinc-400 mt-2">Вы выбрали лучший тариф. Наслаждайтесь.</p>
+            <h2 className="text-2xl md:text-5xl font-black text-purple-500 uppercase">Поздравляем!</h2>
+            <p className="text-zinc-400 mt-2 text-sm md:text-base">Вы выбрали лучший тариф. Наслаждайтесь.</p>
           </div>
         </div>
       )}
 
       {/* Team Section */}
-      <section id="Команда" className="py-16 md:py-24 bg-zinc-950 px-6 scroll-mt-24">
+      <section id="Команда" className="py-16 md:py-24 bg-zinc-950 px-4 md:px-6 scroll-mt-24">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 uppercase reveal-on-scroll">
             Руководство <span className="text-purple-500">Банка</span>
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 text-center">
-            {teamMembers.map((member, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-12 text-center">
+            {TEAM_MEMBERS.map((member, i) => (
                <div 
                  key={i} 
                  className="group relative flex flex-col items-center reveal-on-scroll"
                  style={{ transitionDelay: `${i * 100}ms` }}
                >
-                  <div className={`w-28 h-28 md:w-48 md:h-48 mx-auto ${member.color} rounded-full flex items-center justify-center mb-6 shadow-xl transform group-hover:scale-105 transition-transform duration-300 overflow-hidden border-4 border-zinc-800 group-hover:border-white cursor-pointer`} onClick={() => setSelectedMember(member)}>
+                  <div className={`w-24 h-24 md:w-48 md:h-48 mx-auto ${member.color} rounded-full flex items-center justify-center mb-4 md:mb-6 shadow-xl transform group-hover:scale-105 transition-transform duration-300 overflow-hidden border-4 border-zinc-800 group-hover:border-white cursor-pointer`} onClick={() => setSelectedMember(member)}>
                      {member.img ? (
                        <img src={member.img} alt={member.name} className="w-full h-full object-cover" />
                      ) : (
                        <User size={48} className="opacity-50 md:w-16 md:h-16" />
                      )}
                   </div>
-                  <h3 className="font-bold text-base md:text-xl uppercase group-hover:text-purple-400 transition-colors">{member.name}</h3>
-                  <div className="text-[10px] md:text-xs font-mono text-zinc-400 mb-2 uppercase tracking-wide">{member.role}</div>
-                  <p className="text-[10px] md:text-sm text-zinc-500 italic truncate px-2 mb-4 w-full opacity-0 group-hover:opacity-100 transition-opacity">"{member.desc}"</p>
+                  <h3 className="font-bold text-sm md:text-xl uppercase group-hover:text-purple-400 transition-colors break-words w-full">{member.name}</h3>
+                  <div className="text-[9px] md:text-xs font-mono text-zinc-400 mb-2 uppercase tracking-wide h-8 flex items-center justify-center">{member.role}</div>
+                  <p className="text-[10px] md:text-sm text-zinc-500 italic truncate px-2 mb-4 w-full opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">"{member.desc}"</p>
                   
                   <button 
                     onClick={() => setSelectedMember(member)}
-                    className={`${btnSecondary} mt-auto px-4 py-2 text-[10px] md:text-xs`}
+                    className={`${btnSecondary} mt-auto px-3 py-1 md:px-4 md:py-2 text-[10px] md:text-xs`}
                   >
                     Подробнее
                   </button>
@@ -1078,13 +1174,13 @@ const App = () => {
 
       {/* Team Member Modal */}
       {selectedMember && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedMember(null)}>
-          <div className="bg-zinc-900 border border-zinc-700 max-w-lg w-full p-8 md:p-12 rounded-2xl relative shadow-2xl flex flex-col items-center text-center transform scale-100 transition-all zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto" onClick={() => setSelectedMember(null)}>
+          <div className="bg-zinc-900 border border-zinc-700 max-w-lg w-full p-6 md:p-12 rounded-2xl relative shadow-2xl flex flex-col items-center text-center transform scale-100 transition-all zoom-in-95 duration-200 my-auto" onClick={e => e.stopPropagation()}>
             <button className="absolute top-4 right-4 text-zinc-500 hover:text-white p-2" onClick={() => setSelectedMember(null)}>
               <X size={32} />
             </button>
             
-            <div className={`w-40 h-40 md:w-56 md:h-56 rounded-full overflow-hidden mb-8 border-4 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.4)]`}>
+            <div className={`w-32 h-32 md:w-56 md:h-56 rounded-full overflow-hidden mb-6 md:mb-8 border-4 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.4)] flex-shrink-0`}>
               {selectedMember.img ? (
                 <img src={selectedMember.img} alt={selectedMember.name} className="w-full h-full object-cover" />
               ) : (
@@ -1094,10 +1190,10 @@ const App = () => {
               )}
             </div>
             
-            <h3 className="text-4xl md:text-5xl font-black uppercase mb-2 tracking-tight">{selectedMember.name}</h3>
-            <div className="text-purple-400 font-mono text-sm md:text-base uppercase mb-8 tracking-widest border-b border-zinc-800 pb-4 w-full">{selectedMember.role}</div>
+            <h3 className="text-3xl md:text-5xl font-black uppercase mb-2 tracking-tight">{selectedMember.name}</h3>
+            <div className="text-purple-400 font-mono text-xs md:text-base uppercase mb-6 md:mb-8 tracking-widest border-b border-zinc-800 pb-4 w-full">{selectedMember.role}</div>
             
-            <p className="text-zinc-300 leading-relaxed text-lg md:text-xl font-light">
+            <p className="text-zinc-300 leading-relaxed text-base md:text-xl font-light">
               {selectedMember.fullDesc}
             </p>
           </div>
@@ -1105,15 +1201,19 @@ const App = () => {
       )}
 
       {/* Testimonials */}
-      <section className="py-16 md:py-24 px-6 bg-zinc-900 border-t border-zinc-800">
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-zinc-900 border-t border-zinc-800">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-center text-3xl md:text-5xl font-black mb-12 md:mb-16 reveal-on-scroll">
             ЧТО ГОВОРЯТ <span className="text-cyan-400">ЖЕРТВЫ</span>
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
+          <div ref={reviewsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
             {reviewsToDisplay.map((review, i) => (
-              <div key={i} className="bg-zinc-950 p-6 md:p-8 border border-zinc-800 relative hover:border-cyan-500 transition-all duration-300 hover:-translate-y-1 group flex flex-col reveal-on-scroll" style={{ transitionDelay: `${i * 50}ms` }}>
+              <div 
+                key={i} 
+                className="bg-zinc-950 p-6 md:p-8 border border-zinc-800 relative hover:border-cyan-500 transition-all duration-300 hover:-translate-y-1 group flex flex-col reveal-on-scroll animate-in slide-in-from-bottom-2 fade-in fill-mode-forwards" 
+                style={{ animationDelay: `${i * 50}ms`, animationDuration: '500ms' }}
+              >
                  {/* Decorative Dots */}
                  <div className="flex gap-1 mb-6">
                     <div className="w-2 h-2 rounded-full bg-red-500 group-hover:animate-pulse"></div>
@@ -1149,34 +1249,34 @@ const App = () => {
 
       {/* Unique Commission Section */}
       <section className="py-20 bg-zinc-950 text-white relative overflow-hidden border-t border-zinc-900">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
-           <div className="space-y-8 reveal-on-scroll">
-              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Уникальная <br/>Комиссия</h2>
-              <p className="text-zinc-400 text-lg leading-relaxed border-l-2 border-purple-500 pl-6 max-w-xl">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center relative z-10">
+           <div className="space-y-6 md:space-y-8 reveal-on-scroll">
+              <h2 className="text-3xl md:text-6xl font-black uppercase tracking-tighter">Уникальная <br/>Комиссия</h2>
+              <p className="text-zinc-400 text-base md:text-lg leading-relaxed border-l-2 border-purple-500 pl-6 max-w-xl">
                 Мы рады представить вам уникальное предложение по комиссиям, 
                 специально подобранное для уничтожения вашего счёта. В этой вкладке вы обнаружите 
                 индивидуальные комиссии, созданные с учетом особенностей вашего аккаунта.
               </p>
-              <button className={`${btnBase} bg-white text-black hover:bg-zinc-200 px-8 py-3`}>
+              <button onClick={handleKnowCommission} className={`${btnBase} bg-white text-black hover:bg-zinc-200 px-8 py-3`}>
                 Узнать комиссию
               </button>
            </div>
            
-           <div className="reveal-on-scroll" style={{ transitionDelay: '200ms' }}>
-              <div className="bg-purple-700 rounded-[2rem] p-8 md:p-12 shadow-[0_0_60px_rgba(126,34,206,0.3)] transform rotate-1 hover:rotate-0 transition-transform duration-500 relative overflow-hidden">
+           <div className="reveal-on-scroll w-full" style={{ transitionDelay: '200ms' }}>
+              <div className="bg-purple-700 rounded-[2rem] p-6 md:p-12 shadow-[0_0_60px_rgba(126,34,206,0.3)] transform rotate-1 hover:rotate-0 transition-transform duration-500 relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-50"></div>
-                 <div className="space-y-6 relative z-10">
+                 <div className="space-y-4 md:space-y-6 relative z-10">
                     {[
-                      { name: "Комиссия за просмотр баланса", price: "???" },
-                      { name: "Комиссия за смену пароля", price: "???" },
-                      { name: "Комиссия за перевод между счетами", price: "???" },
-                      { name: "Комиссия за СМС уведомления", price: "???" },
-                      { name: "Комиссия за прокрутку страницы", price: "???" }
+                      { name: "Комиссия за просмотр баланса", price: "???", link: "#Кошелек" },
+                      { name: "Комиссия за смену пароля", price: "???", link: "#app-container" },
+                      { name: "Комиссия за перевод между счетами", price: "???", link: "#Карты" },
+                      { name: "Комиссия за СМС уведомления", price: "???", link: "#Тарифы" },
+                      { name: "Комиссия за прокрутку страницы", price: "???", link: "#Схема" }
                     ].map((com, i) => (
-                        <div key={i} className="flex justify-between items-center group border-b border-purple-500/30 pb-4 last:border-0 last:pb-0">
-                            <span className="font-bold text-white text-sm md:text-base pr-4 group-hover:text-purple-200 transition-colors">{com.name}</span>
-                            <span className="font-mono text-lime-400 text-lg md:text-xl font-bold">{com.price}</span>
-                        </div>
+                        <a key={i} href={com.link} className="flex justify-between items-center group border-b border-purple-500/30 pb-3 md:pb-4 last:border-0 last:pb-0 hover:bg-purple-600/20 px-2 -mx-2 rounded transition-colors cursor-pointer">
+                            <span className="font-bold text-white text-xs md:text-base pr-4 group-hover:text-purple-200 transition-colors underline decoration-dotted decoration-purple-400/50">{com.name}</span>
+                            <span className="font-mono text-lime-400 text-base md:text-xl font-bold">{com.price}</span>
+                        </a>
                     ))}
                  </div>
               </div>
@@ -1186,8 +1286,8 @@ const App = () => {
 
       {/* Footer */}
       <footer className="bg-zinc-950 border-t border-zinc-900 py-12 px-6">
-         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2 group cursor-pointer">
+         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+            <div className="flex items-center gap-2 group cursor-pointer justify-center md:justify-start">
                <div className="w-8 h-8 bg-cyan-900 rounded flex items-center justify-center font-mono font-bold text-cyan-400 group-hover:bg-cyan-600 group-hover:text-white transition-colors">У</div>
                <span className="font-bold text-zinc-500 group-hover:text-white transition-colors">УРК БАНК &copy; 2024</span>
             </div>
